@@ -1,0 +1,524 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ titulo }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-6">
+            <!-- Cabeçalho -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-tags text-primary me-2"></i>{{ titulo }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if form.instance.pk %}
+                        Editando categoria existente
+                        {% else %}
+                        Criando uma nova categoria de produtos
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{% url 'produto:lista_categorias' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar à Lista
+                </a>
+            </div>
+
+            <!-- Card do Formulário -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        {% if form.instance.pk %}Editar Categoria{% else %}Nova Categoria{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="categoria-form" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-3 fs-5"></i>
+                            <div>
+                                <h6 class="alert-heading mb-2">Erro no Formulário</h6>
+                                {% for error in form.non_field_errors %}
+                                    <p class="mb-1">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <!-- Nome -->
+                            <div class="col-md-8">
+                                <div class="form-floating">
+                                    {{ form.nome }}
+                                    <label for="{{ form.nome.id_for_label }}">
+                                        <i class="fas fa-tag me-2"></i>Nome da Categoria *
+                                    </label>
+                                    {% if form.nome.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        {{ form.nome.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Código -->
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    {{ form.codigo }}
+                                    <label for="{{ form.codigo.id_for_label }}">
+                                        <i class="fas fa-hashtag me-2"></i>Código
+                                    </label>
+                                    {% if form.codigo.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        {{ form.codigo.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Descrição -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    {{ form.descricao }}
+                                    <label for="{{ form.descricao.id_for_label }}">
+                                        <i class="fas fa-align-left me-2"></i>Descrição
+                                    </label>
+                                    {% if form.descricao.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        {{ form.descricao.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Cor e Status -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-palette me-2"></i>Cor de Identificação
+                                </label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="flex-grow-1">
+                                        {{ form.cor }}
+                                    </div>
+                                    <div class="color-preview-container">
+                                        <div class="color-preview rounded border" 
+                                             id="color-preview" 
+                                             style="width: 60px; height: 60px; background-color: {% if form.cor.value %}{{ form.cor.value }}{% else %}#6c757d{% endif %}; cursor: pointer;"
+                                             title="Clique para selecionar cor">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if form.cor.errors %}
+                                <div class="invalid-feedback d-block">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.cor.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Escolha uma cor para identificar visualmente esta categoria
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold d-block">
+                                    <i class="fas fa-toggle-on me-2"></i>Status da Categoria
+                                </label>
+                                <div class="form-check form-switch form-check-lg">
+                                    {{ form.ativa }}
+                                    <label class="form-check-label fw-semibold" for="{{ form.ativa.id_for_label }}">
+                                        {% if form.ativa.value %}
+                                        <span class="text-success">Categoria Ativa</span>
+                                        {% else %}
+                                        <span class="text-muted">Categoria Inativa</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                                {% if form.ativa.errors %}
+                                <div class="invalid-feedback d-block">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.ativa.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Categorias inativas não aparecem para seleção em novos produtos
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botões de Ação -->
+                        <div class="d-flex gap-2 justify-content-end mt-5 pt-3 border-top">
+                            <a href="{% url 'produto:lista_categorias' %}" class="btn btn-lg btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-lg btn-primary px-4">
+                                <i class="fas fa-save me-2"></i> 
+                                {% if form.instance.pk %}Atualizar Categoria{% else %}Criar Categoria{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview da Categoria -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-eye me-2 text-primary"></i>Visualização da Categoria
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Apresentação</h6>
+                            <div class="categoria-preview p-4 rounded-3 border">
+                                <div class="d-flex align-items-start gap-3 mb-3">
+                                    <div class="categoria-icone rounded-3 d-flex align-items-center justify-content-center" 
+                                         id="preview-icone-container"
+                                         style="width: 70px; height: 70px; background: linear-gradient(135deg, #f8f9fa, #e9ecef);">
+                                        <i class="fas fa-folder fa-2x" id="preview-icone"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h4 class="mb-1" id="preview-nome">Nome da Categoria</h4>
+                                        <p class="text-muted mb-2" id="preview-codigo">Código: -</p>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge rounded-pill fs-6" id="preview-status">Ativa</span>
+                                            <small class="text-muted" id="preview-produtos">• 0 produtos</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted mb-0" id="preview-descricao">
+                                    Descrição da categoria aparecerá aqui...
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Informações</h6>
+                            <div class="categoria-stats">
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <span class="fw-semibold">Produtos na Categoria</span>
+                                        <span class="badge bg-primary rounded-pill fs-6">0</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <span class="fw-semibold">Status</span>
+                                        <span class="badge bg-success rounded-pill fs-6" id="preview-status-badge">Ativa</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <span class="fw-semibold">Data de Criação</span>
+                                        <small class="text-muted">{% now "d/m/Y" %}</small>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <span class="fw-semibold">Última Atualização</span>
+                                        <small class="text-muted">{% now "d/m/Y" %}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h6 class="text-muted mb-3">Cores da Categoria</h6>
+                                <div class="d-flex gap-2">
+                                    <div class="color-sample rounded-2 p-3 text-center text-white flex-fill"
+                                         style="background-color: {% if form.cor.value %}{{ form.cor.value }}{% else %}#6c757d{% endif %};"
+                                         id="preview-color-sample">
+                                        <small>Cor Principal</small>
+                                    </div>
+                                    <div class="color-sample rounded-2 p-3 text-center text-white flex-fill"
+                                         style="background-color: {% if form.cor.value %}{{ form.cor.value }}33{% else %}#6c757d33{% endif %};">
+                                        <small>Variante Clara</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dicas e Informações -->
+            <div class="alert alert-info border-0 mt-4">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-lightbulb text-warning me-3 mt-1 fs-5"></i>
+                    <div>
+                        <h6 class="alert-heading mb-3">Dicas para uma boa organização</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-3 mb-md-0">
+                                    <li>Use nomes claros e descritivos</li>
+                                    <li>Mantenha uma hierarquia lógica</li>
+                                    <li>Utilize cores para identificação visual</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li>Atribua códigos curtos para referência</li>
+                                    <li>Desative categorias não utilizadas</li>
+                                    <li>Mantenha as descrições atualizadas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
+
+    .form-check-input:checked {
+        background-color: #27ae60;
+        border-color: #27ae60;
+    }
+
+    .form-check-input:focus {
+        border-color: #27ae60;
+        box-shadow: 0 0 0 0.25rem rgba(39, 174, 96, 0.25);
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #27ae60;
+        border-color: #27ae60;
+    }
+
+    .color-preview-container .color-preview {
+        transition: all 0.3s ease;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .color-preview-container .color-preview:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .categoria-preview {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .categoria-preview:hover {
+        border-color: #3498db;
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+    }
+
+    .color-sample {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .color-sample:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Campos obrigatórios */
+    .form-label.required::after {
+        content: " *";
+        color: #e74c3c;
+    }
+
+    /* Estilo para o input de cor */
+    input[type="color"] {
+        height: 60px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    input[type="color"]:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos do DOM
+    const nomeInput = document.getElementById('{{ form.nome.id_for_label }}');
+    const codigoInput = document.getElementById('{{ form.codigo.id_for_label }}');
+    const descricaoInput = document.getElementById('{{ form.descricao.id_for_label }}');
+    const corInput = document.getElementById('{{ form.cor.id_for_label }}');
+    const ativaInput = document.getElementById('{{ form.ativa.id_for_label }}');
+    const colorPreview = document.getElementById('color-preview');
+    const form = document.getElementById('categoria-form');
+
+    // Adicionar classes Bootstrap e placeholders
+    function inicializarCampos() {
+        const campos = [nomeInput, codigoInput, descricaoInput, corInput];
+        
+        campos.forEach(campo => {
+            if (campo) {
+                campo.classList.add('form-control');
+                
+                // Adicionar placeholders
+                if (campo === nomeInput && !campo.placeholder) {
+                    campo.placeholder = 'Ex: Eletrônicos, Materiais Escolares...';
+                }
+                if (campo === codigoInput && !campo.placeholder) {
+                    campo.placeholder = 'Ex: ELET, MAT...';
+                }
+                if (campo === descricaoInput && !campo.placeholder) {
+                    campo.placeholder = 'Descreva o propósito desta categoria...';
+                }
+            }
+        });
+
+        // Configurar textarea
+        if (descricaoInput) {
+            descricaoInput.style.minHeight = '100px';
+            descricaoInput.style.resize = 'vertical';
+        }
+    }
+
+    // Atualizar preview em tempo real
+    function atualizarPreview() {
+        // Nome
+        const previewNome = document.getElementById('preview-nome');
+        previewNome.textContent = nomeInput.value || 'Nome da Categoria';
+
+        // Código
+        const previewCodigo = document.getElementById('preview-codigo');
+        previewCodigo.textContent = codigoInput.value ? `Código: ${codigoInput.value}` : 'Código: -';
+
+        // Descrição
+        const previewDescricao = document.getElementById('preview-descricao');
+        previewDescricao.textContent = descricaoInput.value || 'Descrição da categoria aparecerá aqui...';
+        previewDescricao.style.opacity = descricaoInput.value ? '1' : '0.6';
+
+        // Cor
+        const corSelecionada = corInput.value || '#6c757d';
+        const previewIcone = document.getElementById('preview-icone');
+        const previewIconeContainer = document.getElementById('preview-icone-container');
+        const previewColorSample = document.getElementById('preview-color-sample');
+        
+        previewIcone.style.color = corSelecionada;
+        previewIconeContainer.style.background = `linear-gradient(135deg, ${corSelecionada}15, ${corSelecionada}30)`;
+        colorPreview.style.backgroundColor = corSelecionada;
+        previewColorSample.style.backgroundColor = corSelecionada;
+
+        // Status
+        const previewStatus = document.getElementById('preview-status');
+        const previewStatusBadge = document.getElementById('preview-status-badge');
+        if (ativaInput.checked) {
+            previewStatus.textContent = 'Ativa';
+            previewStatus.className = 'badge bg-success rounded-pill fs-6';
+            previewStatusBadge.textContent = 'Ativa';
+            previewStatusBadge.className = 'badge bg-success rounded-pill fs-6';
+        } else {
+            previewStatus.textContent = 'Inativa';
+            previewStatus.className = 'badge bg-danger rounded-pill fs-6';
+            previewStatusBadge.textContent = 'Inativa';
+            previewStatusBadge.className = 'badge bg-danger rounded-pill fs-6';
+        }
+    }
+
+    // Picker de cor melhorado
+    function configurarSeletorCor() {
+        if (corInput && colorPreview) {
+            colorPreview.addEventListener('click', function() {
+                corInput.click();
+            });
+
+            corInput.addEventListener('input', function() {
+                atualizarPreview();
+            });
+        }
+    }
+
+    // Validação do formulário
+    function configurarValidacao() {
+        form.addEventListener('submit', function(e) {
+            let valid = true;
+            
+            // Validar nome (campo obrigatório)
+            if (!nomeInput.value.trim()) {
+                valid = false;
+                nomeInput.classList.add('is-invalid');
+                
+                // Adicionar feedback visual
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback d-block';
+                feedback.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>O nome da categoria é obrigatório';
+                
+                if (!nomeInput.nextElementSibling?.classList.contains('invalid-feedback')) {
+                    nomeInput.parentNode.appendChild(feedback);
+                }
+            } else {
+                nomeInput.classList.remove('is-invalid');
+                const feedback = nomeInput.parentNode.querySelector('.invalid-feedback');
+                if (feedback) feedback.remove();
+            }
+
+            if (!valid) {
+                e.preventDefault();
+                
+                // Mostrar alerta
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                alertDiv.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle me-3 fs-5"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1">Campos obrigatórios não preenchidos</h6>
+                            <p class="mb-0">Por favor, preencha todos os campos marcados com *</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                const existingAlert = form.querySelector('.alert');
+                if (!existingAlert) {
+                    form.insertBefore(alertDiv, form.firstChild);
+                }
+
+                // Scroll para o primeiro erro
+                nomeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                nomeInput.focus();
+            }
+        });
+    }
+
+    // Inicialização
+    function inicializar() {
+        inicializarCampos();
+        configurarSeletorCor();
+        configurarValidacao();
+        atualizarPreview();
+
+        // Event listeners para atualização em tempo real
+        if (nomeInput) nomeInput.addEventListener('input', atualizarPreview);
+        if (codigoInput) codigoInput.addEventListener('input', atualizarPreview);
+        if (descricaoInput) descricaoInput.addEventListener('input', atualizarPreview);
+        if (ativaInput) ativaInput.addEventListener('change', atualizarPreview);
+
+        // Focar no primeiro campo
+        if (nomeInput) {
+            setTimeout(() => {
+                nomeInput.focus();
+            }, 300);
+        }
+    }
+
+    // Executar inicialização
+    inicializar();
+});
+</script>
+{% endblock %}

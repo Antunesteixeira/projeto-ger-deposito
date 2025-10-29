@@ -1,0 +1,35 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Excluir Produto - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; text-align: center;">
+    <div style="background: white; padding: 2rem; border-radius: 8px;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+        <h2 style="color: #e74c3c; margin-bottom: 1rem;">Confirmar Exclusão</h2>
+        
+        <p style="font-size: 1.2rem; margin-bottom: 1.5rem;">
+            Tem certeza que deseja excluir o produto <strong>"{{ produto.nome }}"</strong>?
+        </p>
+        
+        <p style="color: #7f8c8d; margin-bottom: 2rem;">
+            SKU: {{ produto.sku }}<br>
+            Esta ação não pode ser desfeita.
+        </p>
+
+        <form method="post" style="margin-bottom: 1.5rem;">
+            {% csrf_token %}
+            <button type="submit" class="btn" style="background: #e74c3c; margin-right: 1rem;">
+                🗑️ Sim, Excluir
+            </button>
+            <a href="{% url 'produto:produto_detalhe' produto.pk %}" class="btn" style="background: #6c757d;">
+                ↩️ Cancelar
+            </a>
+        </form>
+
+        <div style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 4px; border: 1px solid #ffeaa7;">
+            <strong>Atenção:</strong> Todas as informações deste produto serão permanentemente excluídas do sistema.
+        </div>
+    </div>
+</div>
+{% endblock %}

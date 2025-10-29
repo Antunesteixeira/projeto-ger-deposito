@@ -1,0 +1,280 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Dashboard de Escolas - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Cabeçalho -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>🏫 Dashboard de Escolas</h2>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'escola:nova_escola' %}" class="btn" style="background: #27ae60;">➕ Nova Escola</a>
+            <a href="{% url 'escola:lista_escolas' %}" class="btn" style="background: #3498db;">📋 Lista de Escolas</a>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #3498db;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #3498db;">{{ total_escolas }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Total de Escolas</p>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #27ae60;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #27ae60;">{{ escolas_ativas }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Escolas Ativas</p>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #f39c12;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #f39c12;">{{ total_alunos }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Total de Alunos</p>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #9b59b6;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #9b59b6;">{{ escolas_municipais }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Escolas Municipais</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <!-- Distribuição por Tipo -->
+        <div style="background: white; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center;">
+                📊 Distribuição por Tipo
+            </h3>
+            
+            {% if escolas_por_tipo %}
+            <div style="max-height: 300px; overflow-y: auto;">
+                {% for tipo in escolas_por_tipo %}
+                <div style="padding: 1rem; border-bottom: 1px solid #eee; {% if not forloop.last %}margin-bottom: 0.5rem;{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>
+                                {% if tipo.tipo_escola == 'municipal' %}🏛️ Municipal
+                                {% elif tipo.tipo_escola == 'estadual' %}🏢 Estadual
+                                {% elif tipo.tipo_escola == 'federal' %}🇧🇷 Federal
+                                {% else %}🏠 Particular{% endif %}
+                            </strong>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; color: #2c3e50;">
+                                {{ tipo.total }} escolas
+                            </div>
+                            <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                {{ tipo.percentual|default:0 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem; background: #ecf0f1; border-radius: 4px; height: 8px;">
+                        <div style="background: 
+                            {% if tipo.tipo_escola == 'municipal' %}#3498db
+                            {% elif tipo.tipo_escola == 'estadual' %}#27ae60
+                            {% elif tipo.tipo_escola == 'federal' %}#e74c3c
+                            {% else %}#f39c12{% endif %}; 
+                            height: 100%; width: {{ tipo.percentual|default:0 }}%; border-radius: 4px;">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                📝 Nenhuma escola cadastrada
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Escolas com Mais Entregas -->
+        <div style="background: white; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center;">
+                🚚 Escolas com Mais Entregas
+            </h3>
+            
+            {% if escolas_mais_entregas %}
+            <div style="max-height: 300px; overflow-y: auto;">
+                {% for escola in escolas_mais_entregas %}
+                <div style="padding: 1rem; border-bottom: 1px solid #eee; {% if not forloop.last %}margin-bottom: 0.5rem;{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <strong>{{ escola.nome }}</strong>
+                            <div style="color: #7f8c8d; font-size: 0.9rem;">
+                                {{ escola.cidade }}
+                            </div>
+                            <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                {{ escola.quantidade_alunos }} alunos
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; color: #e67e22;">
+                                {{ escola.num_entregas }} entregas
+                            </div>
+                            <div style="margin-top: 0.25rem;">
+                                {% if escola.ativo %}
+                                <span style="background: #27ae60; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                    ✅ Ativa
+                                </span>
+                                {% else %}
+                                <span style="background: #e74c3c; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                    ❌ Inativa
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <a href="{% url 'escola:detalhe_escola' escola.pk %}" class="btn" style="background: #3498db; padding: 0.25rem 0.5rem; font-size: 0.8rem; display: inline-block;">
+                            Ver Detalhes
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                🚚 Nenhuma entrega registrada
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Últimas Escolas Cadastradas -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+        <h3 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center;">
+            📅 Últimas Escolas Cadastradas
+        </h3>
+        
+        {% if ultimas_escolas %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f8f9fa;">
+                        <th style="padding: 1rem; text-align: left;">Escola</th>
+                        <th style="padding: 1rem; text-align: left;">Cidade</th>
+                        <th style="padding: 1rem; text-align: center;">Tipo</th>
+                        <th style="padding: 1rem; text-align: center;">Alunos</th>
+                        <th style="padding: 1rem; text-align: center;">Status</th>
+                        <th style="padding: 1rem; text-align: center;">Data Cadastro</th>
+                        <th style="padding: 1rem; text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for escola in ultimas_escolas %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 1rem;">
+                            <strong>{{ escola.nome }}</strong>
+                            {% if escola.codigo_inep %}
+                            <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                INEP: {{ escola.codigo_inep }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {{ escola.cidade }}/{{ escola.estado }}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            {% if escola.tipo_escola == 'municipal' %}
+                            <span style="background: #3498db; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                Municipal
+                            </span>
+                            {% elif escola.tipo_escola == 'estadual' %}
+                            <span style="background: #27ae60; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                Estadual
+                            </span>
+                            {% elif escola.tipo_escola == 'federal' %}
+                            <span style="background: #e74c3c; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                Federal
+                            </span>
+                            {% else %}
+                            <span style="background: #f39c12; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                Particular
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center; font-weight: bold;">
+                            {{ escola.quantidade_alunos }}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            {% if escola.ativo %}
+                            <span style="background: #27ae60; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                ✅ Ativa
+                            </span>
+                            {% else %}
+                            <span style="background: #e74c3c; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                ❌ Inativa
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            {{ escola.data_criacao|date:"d/m/Y" }}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <a href="{% url 'escola:detalhe_escola' escola.pk %}" 
+                               style="color: #3498db; margin: 0 0.25rem;" title="Ver detalhes">👁️</a>
+                            <a href="{% url 'escola:editar_escola' escola.pk %}" 
+                               style="color: #f39c12; margin: 0 0.25rem;" title="Editar">✏️</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; color: #7f8c8d;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🏫</div>
+            <h3 style="margin-bottom: 0.5rem;">Nenhuma escola cadastrada</h3>
+            <p>Comece cadastrando a primeira escola para poder criar entregas.</p>
+            <a href="{% url 'escola:nova_escola' %}" class="btn" style="background: #27ae60; display: inline-block; margin-top: 1rem;">
+                ➕ Cadastrar Primeira Escola
+            </a>
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'escola:lista_escolas' %}" class="btn" style="background: #6c757d; display: block; text-align: center;">
+                📋 Ver Todas as Escolas
+            </a>
+        </div>
+    </div>
+
+    <!-- Menu Rápido -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
+        <a href="{% url 'escola:lista_escolas' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">📋</div>
+            <h4 style="margin: 0.5rem 0;">Lista de Escolas</h4>
+            <p style="margin: 0; color: #7f8c8d;">Ver todas as escolas</p>
+        </a>
+        <a href="{% url 'escola:nova_escola' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">➕</div>
+            <h4 style="margin: 0.5rem 0;">Nova Escola</h4>
+            <p style="margin: 0; color: #7f8c8d;">Cadastrar nova escola</p>
+        </a>
+        <a href="{% url 'entrega:lista_entregas' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">🚚</div>
+            <h4 style="margin: 0.5rem 0;">Entregas</h4>
+            <p style="margin: 0; color: #7f8c8d;">Gerenciar entregas</p>
+        </a>
+        <a href="{% url 'produto:lista_produtos' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">📦</div>
+            <h4 style="margin: 0.5rem 0;">Produtos</h4>
+            <p style="margin: 0; color: #7f8c8d;">Gerenciar produtos</p>
+        </a>
+    </div>
+</div>
+
+<style>
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #2c3e50;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

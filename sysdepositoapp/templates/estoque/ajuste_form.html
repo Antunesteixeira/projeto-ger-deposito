@@ -1,0 +1,208 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ titulo }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>{{ titulo }}</h2>
+        <a href="{% url 'estoque:lista_estoque' %}" class="btn" style="background: #6c757d;">← Voltar</a>
+    </div>
+
+    <div style="background: white; padding: 2rem; border-radius: 8px;">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- Produto -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.produto.label }} *
+                    </label>
+                    {{ form.produto }}
+                    {% if form.produto.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.produto.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Estoque Novo -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        Novo Estoque *
+                    </label>
+                    {{ form.estoque_novo }}
+                    {% if form.estoque_novo.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.estoque_novo.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Motivo -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.motivo.label }} *
+                    </label>
+                    {{ form.motivo }}
+                    {% if form.motivo.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.motivo.errors }}
+                    </div>
+                    {% endif %}
+                    <small style="color: #7f8c8d;">
+                        Descreva o motivo do ajuste (inventário, correção, etc.)
+                    </small>
+                </div>
+            </div>
+
+            <!-- Informações do Produto Selecionado (será preenchido via JavaScript) -->
+            <div id="produto-info" style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin: 1.5rem 0; display: none;">
+                <h4 style="margin: 0 0 1rem 0;">Informações do Produto</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <strong>Estoque Atual:</strong>
+                        <span id="estoque-atual">-</span>
+                    </div>
+                    <div>
+                        <strong>Estoque Mínimo:</strong>
+                        <span id="estoque-minimo">-</span>
+                    </div>
+                    <div>
+                        <strong>Diferença:</strong>
+                        <span id="diferenca">-</span>
+                    </div>
+                    <div>
+                        <strong>Status:</strong>
+                        <span id="status-estoque">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn" style="background: #f39c12;">⚙️ Aplicar Ajuste</button>
+                <a href="{% url 'estoque:lista_estoque' %}" class="btn" style="background: #6c757d;">❌ Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Informações de Ajuda -->
+    <div style="background: #fff3cd; padding: 1.5rem; border-radius: 8px; margin-top: 2rem; border: 1px solid #ffeaa7;">
+        <h4 style="margin-top: 0; color: #856404;">⚠️ Atenção</h4>
+        <p style="margin: 0.5rem 0; color: #856404;">
+            O ajuste de estoque irá:
+        </p>
+        <ul style="margin: 0.5rem 0; color: #856404; padding-left: 1.5rem;">
+            <li>Alterar diretamente a quantidade em estoque do produto</li>
+            <li>Registrar automaticamente uma movimentação correspondente</li>
+            <li>Manter o histórico completo das alterações</li>
+            <li>Não pode ser desfeito facilmente</li>
+        </ul>
+        <p style="margin: 0.5rem 0; color: #856404;">
+            <strong>Use com cuidado!</strong> Prefira movimentações normais para entradas e saídas do dia a dia.
+        </p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const produtoSelect = document.querySelector('#id_produto');
+    const estoqueNovoInput = document.querySelector('#id_estoque_novo');
+    const produtoInfo = document.querySelector('#produto-info');
+    const estoqueAtualSpan = document.querySelector('#estoque-atual');
+    const estoqueMinimoSpan = document.querySelector('#estoque-minimo');
+    const diferencaSpan = document.querySelector('#diferenca');
+    const statusEstoqueSpan = document.querySelector('#status-estoque');
+
+    // Dados dos produtos (seriam carregados via AJAX em uma aplicação real)
+    const produtosData = {
+        {% for produto in form.produto.field.queryset %}
+        '{{ produto.id }}': {
+            'nome': '{{ produto.nome }}',
+            'estoque_atual': {{ produto.estoque_atual }},
+            'estoque_minimo': {{ produto.estoque_minimo }},
+            'status': '{{ produto.status_estoque }}'
+        },
+        {% endfor %}
+    };
+
+    function atualizarInfoProduto() {
+        const produtoId = produtoSelect.value;
+        
+        if (produtoId && produtosData[produtoId]) {
+            const produto = produtosData[produtoId];
+            const estoqueNovo = parseInt(estoqueNovoInput.value) || 0;
+            const diferenca = estoqueNovo - produto.estoque_atual;
+            
+            estoqueAtualSpan.textContent = produto.estoque_atual;
+            estoqueMinimoSpan.textContent = produto.estoque_minimo;
+            
+            // Calcular diferença
+            if (diferenca > 0) {
+                diferencaSpan.textContent = `+${diferenca} (Entrada)`;
+                diferencaSpan.style.color = '#27ae60';
+            } else if (diferenca < 0) {
+                diferencaSpan.textContent = `${diferenca} (Saída)`;
+                diferencaSpan.style.color = '#e74c3c';
+            } else {
+                diferencaSpan.textContent = '0 (Sem alteração)';
+                diferencaSpan.style.color = '#7f8c8d';
+            }
+            
+            // Status do estoque
+            if (produto.status === 'esgotado') {
+                statusEstoqueSpan.textContent = '🔴 Esgotado';
+                statusEstoqueSpan.style.color = '#e74c3c';
+            } else if (produto.status === 'baixo') {
+                statusEstoqueSpan.textContent = '🟡 Baixo';
+                statusEstoqueSpan.style.color = '#f39c12';
+            } else {
+                statusEstoqueSpan.textContent = '🟢 Normal';
+                statusEstoqueSpan.style.color = '#27ae60';
+            }
+            
+            produtoInfo.style.display = 'block';
+        } else {
+            produtoInfo.style.display = 'none';
+        }
+    }
+
+    produtoSelect.addEventListener('change', atualizarInfoProduto);
+    estoqueNovoInput.addEventListener('input', atualizarInfoProduto);
+    
+    // Inicializar
+    atualizarInfoProduto();
+});
+</script>
+
+<style>
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+</style>
+{% endblock %}

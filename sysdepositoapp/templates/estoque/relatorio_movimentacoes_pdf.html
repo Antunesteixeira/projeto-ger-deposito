@@ -1,0 +1,560 @@
+<!-- templates/estoque/relatorio_movimentacoes_pdf.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Relatório de Movimentações - SysDepósito</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px;
+                color: #666;
+                font-family: Arial, sans-serif;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        .movimentacoes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 9px;
+        }
+
+        .movimentacoes-table th {
+            background-color: #f8f9fa;
+            padding: 6px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .movimentacoes-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .movimentacoes-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .tipo-entrada {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .tipo-saida {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 8px;
+            color: #7f8c8d;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
+        }
+
+        @media print {
+            .page-break {
+                page-break-before: always;
+            }
+        }
+            line-height: 1.3;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin: 0 0 5px 0;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 11px;
+            margin: 0;
+        }
+        
+        .info-section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background-color: #34495e;
+            color: white;
+            padding: 5px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            border-radius: 3px;
+        }
+        
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .filtro-item {
+            margin-bottom: 4px;
+        }
+        
+        .filtro-label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 9px;
+        }
+        
+        .filtro-value {
+            color: #333;
+            font-size: 9px;
+        }
+        
+        .estatisticas-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .estatistica-card {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: left;
+        }
+        
+        .estatistica-card.entrada {
+            border-left: 4px solid #27ae60;
+        }
+        
+        .estatistica-card.saida {
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .estatistica-titulo {
+            font-size: 11px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+        
+        .estatistica-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+            font-size: 10px;
+        }
+        
+        .estatistica-label {
+            color: #7f8c8d;
+        }
+        
+        .estatistica-valor {
+            font-size: 14px;
+        }
+
+        .movimentacoes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 9px;
+        }
+
+        .movimentacoes-table th {
+            background-color: #f8f9fa;
+            padding: 6px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .movimentacoes-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .movimentacoes-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .tipo-entrada {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .tipo-saida {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 8px;
+            color: #7f8c8d;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
+        }
+
+        @media print {
+            .page-break {
+                page-break-before: always;
+            }
+            font-weight: bold;
+            color: #2c3e50;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .estatistica-label {
+            font-size: 8px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 8px;
+        }
+        
+        .table th {
+            background-color: #34495e;
+            color: white;
+            padding: 6px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 8px;
+        }
+        
+        .table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid #ddd;
+            font-size: 8px;
+        }
+        
+        .table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 7px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .badge-success { background-color: #27ae60; color: white; }
+        .badge-danger { background-color: #e74c3c; color: white; }
+        .badge-secondary { background-color: #6c757d; color: white; }
+        
+        .text-success { color: #27ae60; }
+        .text-danger { color: #e74c3c; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        
+        .footer {
+            margin-top: 15px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            font-size: 8px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        
+        .summary {
+            background-color: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 9px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+    </head>
+<body>
+    <div class="header">
+        <h1>Relatório de Movimentações de Estoque</h1>
+        <p class="subtitle">Período: {{ filtros.data_inicio }} a {{ filtros.data_fim }}</p>
+    </div>
+
+    <div class="info-section">
+        <div class="section-title">Filtros Aplicados</div>
+        <div class="filtros-grid">
+            <div class="filtro-item">
+                <span class="filtro-label">Produto:</span>
+                <span class="filtro-value">{{ filtros.produto }}</span>
+            </div>
+            <div class="filtro-item">
+                <span class="filtro-label">Tipo:</span>
+                <span class="filtro-value">{{ filtros.tipo }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="section-title">Estatísticas</div>
+        <div class="estatisticas-grid">
+            <div class="estatistica-card entrada">
+                <div class="estatistica-titulo">Entradas</div>
+                <div class="estatistica-item">
+                    <span class="estatistica-label">Quantidade de Movimentações:</span>
+                    <span class="estatistica-valor">{{ stats.entradas.total }}</span>
+                </div>
+                <div class="estatistica-item">
+                    <span class="estatistica-label">Total de Itens:</span>
+                    <span class="estatistica-valor">{{ stats.entradas.quantidade }}</span>
+                </div>
+                <div class="estatistica-item">
+                    <span class="estatistica-label">Valor Total:</span>
+                    <span class="estatistica-valor">R$ {{ stats.entradas.valor|floatformat:2 }}</span>
+                </div>
+            </div>
+            
+            <div class="estatistica-card saida">
+                <div class="estatistica-titulo">Saídas</div>
+                <div class="estatistica-item">
+                    <span class="estatistica-label">Quantidade de Movimentações:</span>
+                    <span class="estatistica-valor">{{ stats.saidas.total }}</span>
+                </div>
+                <div class="estatistica-item">
+                    <span class="estatistica-label">Total de Itens:</span>
+                    <span class="estatistica-valor">{{ stats.saidas.quantidade }}</span>
+                </div>
+                <div class="estatistica-item">
+                    <span class="estatistica-label">Valor Total:</span>
+                    <span class="estatistica-valor">R$ {{ stats.saidas.valor|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="section-title">Lista de Movimentações</div>
+        <table class="movimentacoes-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Produto</th>
+                    <th>Tipo</th>
+                    <th>Qtde</th>
+                    <th>Motivo</th>
+                    <th>Responsável</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in movimentacoes %}
+                <tr>
+                    <td>{{ mov.data_movimentacao|date:"d/m/Y H:i" }}</td>
+                    <td>{{ mov.produto.nome }}</td>
+                    <td class="tipo-{% if mov.tipo == 'E' %}entrada{% else %}saida{% endif %}">
+                        {{ mov.get_tipo_display }}
+                    </td>
+                    <td>{{ mov.quantidade }}</td>
+                    <td>{{ mov.motivo }}</td>
+                    <td>{{ mov.usuario.get_full_name|default:mov.usuario.username }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Gerado em {{ gerado_em|date:"d/m/Y H:i" }} por {{ usuario.get_full_name|default:usuario.username }}</p>
+    </div>
+    <!-- Cabeçalho -->
+    <div class="header">
+        <h1>RELATÓRIO DE MOVIMENTAÇÕES DE ESTOQUE</h1>
+        <p class="subtitle">SysDepósito - Sistema de Gerenciamento</p>
+    </div>
+
+    <!-- Informações do Relatório -->
+    <div class="info-section">
+        <div class="section-title">📊 INFORMAÇÕES DO RELATÓRIO</div>
+        
+        <div class="filtros-grid">
+            <div class="filtro-item">
+                <span class="filtro-label">Data de Geração:</span>
+                <span class="filtro-value">{{ gerado_em|date:"d/m/Y H:i" }}</span>
+            </div>
+            
+            <div class="filtro-item">
+                <span class="filtro-label">Usuário:</span>
+                <span class="filtro-value">{{ usuario.username }}</span>
+            </div>
+            
+            <div class="filtro-item">
+                <span class="filtro-label">Período:</span>
+                <span class="filtro-value">
+                    {% if filtros_aplicados.data_inicio and filtros_aplicados.data_fim %}
+                        {{ filtros_aplicados.data_inicio }} a {{ filtros_aplicados.data_fim }}
+                    {% elif filtros_aplicados.data_inicio %}
+                        A partir de {{ filtros_aplicados.data_inicio }}
+                    {% elif filtros_aplicados.data_fim %}
+                        Até {{ filtros_aplicados.data_fim }}
+                    {% else %}
+                        Período completo
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="filtro-item">
+                <span class="filtro-label">Filtros Aplicados:</span>
+                <span class="filtro-value">
+                    {% if filtros_aplicados.produto %}
+                        Produto: {{ filtros_aplicados.produto.nome }}
+                    {% elif filtros_aplicados.tipo %}
+                        Tipo: {{ filtros_aplicados.tipo }}
+                    {% else %}
+                        Todos os registros
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="info-section">
+        <div class="section-title">📈 ESTATÍSTICAS GERAIS</div>
+        
+        <div class="estatisticas-grid">
+            <div class="estatistica-card">
+                <div class="estatistica-valor">{{ estatisticas.total_registros }}</div>
+                <div class="estatistica-label">Total de Registros</div>
+            </div>
+            
+            <div class="estatistica-card">
+                <div class="estatistica-valor">{{ estatisticas.total_entradas }}</div>
+                <div class="estatistica-label">Entradas</div>
+            </div>
+            
+            <div class="estatistica-card">
+                <div class="estatistica-valor">{{ estatisticas.total_saidas }}</div>
+                <div class="estatistica-label">Saídas</div>
+            </div>
+            
+            <div class="estatistica-card">
+                <div class="estatistica-valor text-success">+{{ estatisticas.quantidade_entradas }}</div>
+                <div class="estatistica-label">Qtd. Entradas</div>
+            </div>
+            
+            <div class="estatistica-card">
+                <div class="estatistica-valor text-danger">-{{ estatisticas.quantidade_saidas }}</div>
+                <div class="estatistica-label">Qtd. Saídas</div>
+            </div>
+            
+            <div class="estatistica-card">
+                <div class="estatistica-valor {% if estatisticas.saldo_quantidade >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if estatisticas.saldo_quantidade >= 0 %}+{% endif %}{{ estatisticas.saldo_quantidade }}
+                </div>
+                <div class="estatistica-label">Saldo</div>
+            </div>
+        </div>
+        
+        {% if estatisticas.produto_mais_movimentado %}
+        <div style="text-align: center; margin-top: 8px;">
+            <small class="filtro-label">
+                Produto mais movimentado: {{ estatisticas.produto_mais_movimentado.produto__nome }} 
+                ({{ estatisticas.produto_mais_movimentado.total }} movimentações)
+            </small>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Resumo -->
+    <div class="summary">
+        <strong>RELATÓRIO GERADO COM SUCESSO | {{ estatisticas.total_registros }} MOVIMENTAÇÕES REGISTRADAS</strong>
+    </div>
+
+    <!-- Tabela de Movimentações -->
+    <div class="info-section">
+        <div class="section-title">📋 DETALHES DAS MOVIMENTAÇÕES</div>
+        
+        {% if movimentacoes %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Produto</th>
+                    <th class="text-center">Tipo</th>
+                    <th class="text-center">Quantidade</th>
+                    <th>Motivo</th>
+                    <th>Usuário</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in movimentacoes %}
+                <tr>
+                    <td>
+                        <div>{{ mov.data_ocorrencia|date:"d/m/Y" }}</div>
+                        <small>{{ mov.data_ocorrencia|date:"H:i" }}</small>
+                    </td>
+                    <td>
+                        <div><strong>{{ mov.produto.nome }}</strong></div>
+                        <small>SKU: {{ mov.produto.sku|default:"-" }}</small>
+                    </td>
+                    <td class="text-center">
+                        {% if mov.tipo == 'E' %}
+                        <span class="badge badge-success">ENTRADA</span>
+                        {% else %}
+                        <span class="badge badge-danger">SAÍDA</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center {% if mov.tipo == 'E' %}text-success{% else %}text-danger{% endif %}">
+                        <strong>{% if mov.tipo == 'E' %}+{% else %}-{% endif %}{{ mov.quantidade }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge badge-secondary">{{ mov.get_motivo_display }}</span>
+                    </td>
+                    <td>{{ mov.usuario.username }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align: center; padding: 20px; color: #7f8c8d;">
+            <p>Nenhuma movimentação encontrada com os filtros aplicados.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Rodapé -->
+    <div class="footer">
+        SysDepósito - Sistema de Gerenciamento de Estoque | 
+        Relatório gerado automaticamente em {{ gerado_em|date:"d/m/Y H:i" }} | 
+        Página 1 de 1
+    </div>
+</body>
+</html>

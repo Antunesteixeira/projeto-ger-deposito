@@ -1,0 +1,30 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2>Bem-vindo ao SysDepósito</h2>
+<p>Selecione uma opção no menu:</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
+    <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center;">
+        <h3>📦 Produtos</h3>
+        <p>Gerenciar produtos do depósito</p>
+        <a href="{% url 'produto:lista_produtos' %}" class="btn">Acessar</a>
+    </div>
+    <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center;">
+        <h3>📊 Estoque</h3>
+        <p>Controle de estoque</p>
+        <a href="{% url 'estoque:dashboard_estoque' %}" class="btn">Acessar</a>
+    </div>
+    <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center;">
+        <h3>🏫 Escolas</h3>
+        <p>Gestão de escolas</p>
+        <a href="{% url 'escola:dashboard_escolas' %}" class="btn">Acessar</a>
+    </div>
+    <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center;">
+        <h3>🚚 Entregas</h3>
+        <p>Gestão de entregas</p>
+        <a href="{% url 'entrega:dashboard_entregas' %}" class="btn">Acessar</a>
+    </div>
+</div>
+{% endblock %}

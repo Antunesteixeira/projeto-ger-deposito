@@ -1,0 +1,393 @@
+<!-- templates/escolas/detalhes_escola.html -->
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ escola.nome }} - Detalhes - SysDepósito{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-school text-primary me-2"></i>{{ escola.nome }}
+            </h1>
+            <p class="text-muted mb-0">Detalhes completos da instituição</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'escola:editar_escola' escola.id %}" class="btn btn-warning">
+                <i class="fas fa-edit me-2"></i>Editar
+            </a>
+            <form method="post" action="#" class="d-inline">
+                {% csrf_token %}
+                {% if escola.ativo %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Desativar esta escola?');">
+                    <i class="fas fa-pause me-2"></i>Desativar
+                </button>
+                {% else %}
+                <button type="submit" class="btn btn-success" onclick="return confirm('Ativar esta escola?');">
+                    <i class="fas fa-play me-2"></i>Ativar
+                </button>
+                {% endif %}
+            </form>
+            <a href="{% url 'escola:lista_escolas' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert {% if escola.ativo %}alert-success{% else %}alert-danger{% endif %} d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas {% if escola.ativo %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} me-2"></i>
+                    Escola <strong>{% if escola.ativo %}ATIVA{% else %}INATIVA{% endif %}</strong>
+                    {% if escola.codigo_inep %} | Código INEP: <strong>{{ escola.codigo_inep }}</strong>{% endif %}
+                </div>
+                <div class="badge bg-{% if escola.ativo %}success{% else %}danger{% endif %} fs-6">
+                    {{ escola.get_tipo_escola_display }} - {{ escola.get_nivel_ensino_display }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações Principais -->
+        <div class="col-lg-8">
+            <!-- Informações da Escola -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>Informações da Escola
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Nome:</td>
+                                    <td>{{ escola.nome }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Código INEP:</td>
+                                    <td>
+                                        {% if escola.codigo_inep %}
+                                        <code>{{ escola.codigo_inep }}</code>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Tipo:</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ escola.get_tipo_escola_display }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Nível:</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ escola.get_nivel_ensino_display }}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Quantidade de Alunos:</td>
+                                    <td>
+                                        <span class="fw-bold fs-5 {% if escola.quantidade_alunos %}text-primary{% else %}text-muted{% endif %}">
+                                            {{ escola.quantidade_alunos|default:"0" }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Diretor:</td>
+                                    <td>{{ escola.diretor|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Responsável:</td>
+                                    <td>{{ escola.responsavel_contato|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Telefone Resp.:</td>
+                                    <td>{{ escola.telefone_responsavel|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if escola.observacoes %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label class="fw-bold text-muted">Observações:</label>
+                            <div class="border rounded p-3 bg-light">
+                                {{ escola.observacoes|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Endereço -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>Endereço
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Endereço:</td>
+                                    <td>{{ escola.endereco|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Bairro:</td>
+                                    <td>{{ escola.bairro|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold text-muted" width="40%">Cidade:</td>
+                                    <td>{{ escola.cidade|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-muted">Estado/CEP:</td>
+                                    <td>
+                                        {{ escola.estado|default:"-" }}
+                                        {% if escola.cep %} | {{ escola.cep }}{% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar com Contatos e Ações Rápidas -->
+        <div class="col-lg-4">
+            <!-- Contatos -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-phone me-2 text-primary"></i>Contatos
+                    </h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalContato">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if contatos %}
+                    <div class="list-group list-group-flush">
+                        {% for contato in contatos %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {{ contato.get_tipo_display }}
+                                        {% if contato.principal %}
+                                        <span class="badge bg-success ms-1">Principal</span>
+                                        {% endif %}
+                                    </h6>
+                                    <p class="mb-1">{{ contato.valor }}</p>
+                                    {% if contato.observacao %}
+                                    <small class="text-muted">{{ contato.observacao }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-phone fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum contato cadastrado</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Contatos principais da escola -->
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <h6 class="fw-bold text-muted mb-2">Contatos Principais:</h6>
+                        {% if escola.telefone %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            <span>{{ escola.telefone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if escola.email %}
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <span>{{ escola.email }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histórico Recente -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2 text-primary"></i>Histórico Recente
+                    </h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalHistorico">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if historico %}
+                    <div class="list-group list-group-flush">
+                        {% for evento in historico %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <span class="badge bg-{% if evento.tipo_evento == 'C' %}success{% elif evento.tipo_evento == 'A' %}info{% elif evento.tipo_evento == 'S' %}success{% else %}warning{% endif %} me-1">
+                                        {{ evento.get_tipo_evento_display }}
+                                    </span>
+                                </h6>
+                                <small class="text-muted">{{ evento.data_evento|date:"d/m/Y" }}</small>
+                            </div>
+                            <p class="mb-1">{{ evento.descricao }}</p>
+                            {% if evento.observacoes %}
+                            <small class="text-muted">{{ evento.observacoes }}</small>
+                            {% endif %}
+                            {% if evento.usuario %}
+                            <small class="text-muted">Por: {{ evento.usuario.username }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum evento registrado</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Adicionar Contato -->
+<div class="modal fade" id="modalContato" tabindex="-1" aria-labelledby="modalContatoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalContatoLabel">
+                    <i class="fas fa-plus me-2"></i>Adicionar Contato
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="formContato">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% for field in form_contato %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger small">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="contato-submit" class="btn btn-primary">Salvar Contato</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Adicionar Histórico -->
+<div class="modal fade" id="modalHistorico" tabindex="-1" aria-labelledby="modalHistoricoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalHistoricoLabel">
+                    <i class="fas fa-plus me-2"></i>Adicionar Evento Histórico
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="formHistorico">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% for field in form_historico %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger small">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="historico-submit" class="btn btn-primary">Salvar Evento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-borderless td {
+        border: none;
+        padding: 0.3rem 0;
+    }
+    
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    .card {
+        transition: transform 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Limpar formulários ao fechar modal
+    document.getElementById('modalContato').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('formContato').reset();
+    });
+    
+    document.getElementById('modalHistorico').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('formHistorico').reset();
+    });
+    
+    // Prevenir envio duplo de formulários
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

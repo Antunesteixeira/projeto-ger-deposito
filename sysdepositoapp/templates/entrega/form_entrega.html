@@ -1,0 +1,113 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ titulo }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>{{ titulo }}</h2>
+        <a href="{% url 'entrega:lista_escolas' %}" class="btn" style="background: #6c757d;">← Voltar</a>
+    </div>
+
+    <div style="background: white; padding: 2rem; border-radius: 8px;">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- Nome -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.nome.label }} *
+                    </label>
+                    {{ form.nome }}
+                    {% if form.nome.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.nome.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Responsável -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.responsavel.label }}
+                    </label>
+                    {{ form.responsavel }}
+                </div>
+
+                <!-- Telefone -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.telefone.label }}
+                    </label>
+                    {{ form.telefone }}
+                </div>
+
+                <!-- Email -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.email.label }}
+                    </label>
+                    {{ form.email }}
+                </div>
+
+                <!-- Endereço -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.endereco.label }} *
+                    </label>
+                    {{ form.endereco }}
+                    {% if form.endereco.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.endereco.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Status -->
+                <div style="grid-column: span 2;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        {{ form.ativo }}
+                        {{ form.ativo.label }}
+                    </label>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn" style="background: #27ae60;">💾 Salvar Escola</button>
+                <a href="{% url 'escola:lista_escolas' %}" class="btn" style="background: #6c757d;">❌ Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+</style>
+{% endblock %}

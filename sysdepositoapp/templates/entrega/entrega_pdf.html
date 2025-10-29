@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Entrega {{ entrega.numero_pedido }} - SysDepósito</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px;
+                color: #666;
+                font-family: Arial, sans-serif;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 1px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin: 0 0 3px 0;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 11px;
+            margin: 0;
+        }
+        
+        .info-section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background-color: #34495e;
+            color: white;
+            padding: 5px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            border-radius: 3px;
+        }
+        
+        .compact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .compact-item {
+            margin-bottom: 4px;
+            padding: 3px 0;
+        }
+        
+        .compact-label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 9px;
+        }
+        
+        .compact-value {
+            color: #333;
+            font-size: 9px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-planned { background-color: #f39c12; color: white; }
+        .status-preparation { background-color: #3498db; color: white; }
+        .status-transport { background-color: #9b59b6; color: white; }
+        .status-delivered { background-color: #27ae60; color: white; }
+        .status-cancelled { background-color: #e74c3c; color: white; }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 9px;
+        }
+        
+        .table th {
+            background-color: #34495e;
+            color: white;
+            padding: 6px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 9px;
+        }
+        
+        .table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #ddd;
+            font-size: 9px;
+        }
+        
+        .table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .table .number {
+            text-align: right;
+        }
+        
+        .table .center {
+            text-align: center;
+        }
+        
+        .observations {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 3px;
+            padding: 8px;
+            margin: 10px 0;
+            font-size: 9px;
+        }
+        
+        .footer {
+            margin-top: 15px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            font-size: 8px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        
+        .school-info {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 3px;
+            margin: 8px 0;
+            font-size: 9px;
+        }
+        
+        .urgent {
+            background-color: #e74c3c;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: bold;
+        }
+        
+        .scheduled {
+            background-color: #3498db;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: bold;
+        }
+        
+        .late {
+            background-color: #e74c3c;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: bold;
+            margin-left: 3px;
+        }
+        
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .text-sm {
+            font-size: 9px;
+        }
+        
+        .text-xs {
+            font-size: 8px;
+        }
+        
+        .mb-1 {
+            margin-bottom: 5px;
+        }
+        
+        /* Otimizações para evitar quebra de página desnecessária */
+        .keep-together {
+            page-break-inside: avoid;
+        }
+        
+        /* Estilos para a assinatura */
+        .assinatura-section {
+            margin-top: 20px;
+            padding: 15px 0;
+            border-top: 2px solid #2c3e50;
+            page-break-inside: avoid;
+        }
+        
+        .assinatura-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 10px;
+        }
+        
+        .assinatura-box {
+            text-align: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        
+        .assinatura-line {
+            margin: 25px 0 10px 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        
+        .assinatura-label {
+            font-weight: bold;
+            font-size: 10px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .assinatura-info {
+            font-size: 9px;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .declaracao {
+            background: #e8f5e8;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #27ae60;
+            margin: 10px 0;
+            font-size: 9px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <div class="header">
+        <h1>RELATÓRIO DE ENTREGA</h1>
+        <p class="subtitle">Pedido: {{ entrega.numero_pedido }} | Gerado em: {{ gerado_em|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <div class="two-columns">
+        <!-- Informações da Entrega -->
+        <div class="info-section">
+            <div class="section-title">📋 INFORMAÇÕES DA ENTREGA</div>
+            
+            <div class="compact-grid">
+                <div class="compact-item">
+                    <div class="compact-label">Nº Pedido:</div>
+                    <div class="compact-value">{{ entrega.numero_pedido }}</div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Status:</div>
+                    <div class="compact-value">
+                        {% if entrega.status == 'planejada' %}
+                            <span class="status-badge status-planned">Planejada</span>
+                        {% elif entrega.status == 'preparacao' %}
+                            <span class="status-badge status-preparation">Preparação</span>
+                        {% elif entrega.status == 'transporte' %}
+                            <span class="status-badge status-transport">Transporte</span>
+                        {% elif entrega.status == 'entregue' %}
+                            <span class="status-badge status-delivered">Entregue</span>
+                        {% elif entrega.status == 'cancelada' %}
+                            <span class="status-badge status-cancelled">Cancelada</span>
+                        {% endif %}
+                        {% if entrega.atrasada %}<span class="late">Atrasada</span>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Data Criação:</div>
+                    <div class="compact-value">{{ entrega.data_criacao|date:"d/m/Y H:i" }}</div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Data Prevista:</div>
+                    <div class="compact-value">{{ entrega.data_entrega_prevista|date:"d/m/Y" }}</div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Data Real:</div>
+                    <div class="compact-value">
+                        {% if entrega.data_entrega_real %}
+                            {{ entrega.data_entrega_real|date:"d/m/Y" }}
+                        {% else %}
+                            Pendente
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Tipo:</div>
+                    <div class="compact-value">
+                        {% if entrega.tipo_entrega == 'urgente' %}
+                            <span class="urgent">URGENTE</span>
+                        {% elif entrega.tipo_entrega == 'agendada' %}
+                            <span class="scheduled">AGENDADA</span>
+                        {% else %}
+                            NORMAL
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Responsável:</div>
+                    <div class="compact-value">{{ entrega.responsavel_entrega }}</div>
+                </div>
+                
+                {% if entrega.motorista %}
+                <div class="compact-item">
+                    <div class="compact-label">Motorista:</div>
+                    <div class="compact-value">{{ entrega.motorista }}</div>
+                </div>
+                {% endif %}
+                
+                {% if entrega.veiculo %}
+                <div class="compact-item">
+                    <div class="compact-label">Veículo:</div>
+                    <div class="compact-value">{{ entrega.veiculo }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Informações da Escola -->
+        <div class="info-section">
+            <div class="section-title">🏫 INFORMAÇÕES DA ESCOLA</div>
+            
+            <div class="school-info">
+                <div class="compact-item mb-1">
+                    <div class="compact-label">Nome:</div>
+                    <div class="compact-value">{{ entrega.escola.nome }}</div>
+                </div>
+                
+                <div class="compact-item mb-1">
+                    <div class="compact-label">Endereço:</div>
+                    <div class="compact-value text-xs">{{ entrega.escola.endereco_completo|default:entrega.escola.endereco|truncatewords:10 }}</div>
+                </div>
+                
+                {% if entrega.escola.telefone %}
+                <div class="compact-item">
+                    <div class="compact-label">Telefone:</div>
+                    <div class="compact-value">{{ entrega.escola.telefone }}</div>
+                </div>
+                {% endif %}
+                
+                {% if entrega.escola.diretor %}
+                <div class="compact-item">
+                    <div class="compact-label">Diretor:</div>
+                    <div class="compact-value">{{ entrega.escola.diretor }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Itens da Entrega -->
+    <div class="info-section keep-together">
+        <div class="section-title">📦 ITENS DA ENTREGA</div>
+        
+        {% if entrega.itens.all %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 40%">Produto</th>
+                    <th style="width: 12%">SKU</th>
+                    <th style="width: 8%" class="center">Qtd</th>
+                    <th style="width: 15%" class="number">Preço Unit.</th>
+                    <th style="width: 15%" class="number">Subtotal</th>
+                    <th style="width: 10%">Obs</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in entrega.itens.all %}
+                <tr>
+                    <td class="text-sm">{{ item.produto.nome|truncatewords:3 }}</td>
+                    <td class="text-sm">{{ item.produto.sku|default:"-" }}</td>
+                    <td class="center">{{ item.quantidade }}</td>
+                    <!--<td class="number">R$ {{ item.produto.preco_venda|floatformat:2 }}</td>
+                    <td class="number">R$ {{ item.subtotal|floatformat:2 }}</td> -->
+                    <td class="number"> -- </td>
+                    <td class="number"> -- </td>
+                    <td class="text-xs">{{ item.observacao|default:"-"|truncatewords:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Resumo Compacto -->
+        <div style="background: #34495e; color: white; padding: 6px 8px; border-radius: 3px; margin: 5px 0; font-size: 10px; text-align: center;">
+            <!--<strong>TOTAL: {{ entrega.itens.count }} PRODUTOS • {{ entrega.total_itens }} ITENS • R$ {{ entrega.valor_total|floatformat:2 }}</strong> -->
+            <strong>TOTAL: {{ entrega.itens.count }} PRODUTOS • {{ entrega.total_itens }} ITENS </strong>
+        </div>
+        {% else %}
+        <p class="text-sm" style="text-align: center; color: #7f8c8d; font-style: italic; margin: 10px 0;">
+            Nenhum item cadastrado nesta entrega.
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Observações e Informações do Sistema lado a lado -->
+    <div class="two-columns keep-together">
+        {% if entrega.observacoes %}
+        <div class="info-section">
+            <div class="section-title">📝 OBSERVAÇÕES</div>
+            <div class="observations">
+                {{ entrega.observacoes|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Informações do Sistema -->
+        <div class="info-section">
+            <div class="section-title">ℹ️ INFORMAÇÕES DO SISTEMA</div>
+            
+            <div class="compact-grid">
+                <div class="compact-item">
+                    <div class="compact-label">Criado por:</div>
+                    <div class="compact-value">{{ entrega.usuario.username|default:"Sistema" }}</div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Data Criação:</div>
+                    <div class="compact-value">{{ entrega.data_criacao|date:"d/m/Y H:i" }}</div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Última Atualização:</div>
+                    <div class="compact-value">{{ entrega.data_atualizacao|date:"d/m/Y H:i" }}</div>
+                </div>
+                
+                <div class="compact-item">
+                    <div class="compact-label">Documento Gerado:</div>
+                    <div class="compact-value">{{ gerado_em|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Assinatura no Rodapé -->
+    <div class="assinatura-section">
+        <div class="declaracao">
+            <strong>DECLARAÇÃO:</strong> Recebemos os materiais relacionados neste relatório em perfeito estado e conforme especificado.
+        </div>
+        
+        <div class="assinatura-container">
+            <!-- Assinatura do Recebedor -->
+            <div class="assinatura-box">
+                <div class="assinatura-label">RECEBEDOR</div>
+                <div class="assinatura-line"></div>
+                <div class="assinatura-info">Nome: ___________________________________</div>
+                <div class="assinatura-info">CPF: ____________________ RG: _______________</div>
+                <div class="assinatura-info">Cargo: _________________________________</div>
+                <div class="assinatura-info">Data: ___/___/_______ Hora: ______:______</div>
+            </div>
+            
+            <!-- Assinatura do Entregador -->
+            <div class="assinatura-box">
+                <div class="assinatura-label">ENTREGADOR</div>
+                <div class="assinatura-line"></div>
+                <div class="assinatura-info">Nome: ___________________________________</div>
+                <div class="assinatura-info">CPF: ____________________ RG: _______________</div>
+                <div class="assinatura-info">Empresa: _______________________________</div>
+                <div class="assinatura-info">Data: ___/___/_______ Hora: ______:______</div>
+            </div>
+        </div>
+        
+        <!-- Observações da Entrega -->
+        <div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 4px; font-size: 9px;">
+            <strong>Observações do Recebimento:</strong> 
+            ________________________________________________________________
+            ________________________________________________________________
+            ________________________________________________________________
+        </div>
+    </div>
+
+    <!-- Rodapé do Sistema -->
+    <div class="footer">
+        SysDepósito - Sistema de Gerenciamento de Entregas | Documento gerado automaticamente
+    </div>
+</body>
+</html>

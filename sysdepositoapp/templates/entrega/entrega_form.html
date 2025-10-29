@@ -1,0 +1,658 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ titulo }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>{{ titulo }}</h2>
+        <a href="{% url 'entrega:lista_entregas' %}" class="btn" style="background: #6c757d;">← Voltar</a>
+    </div>
+
+    <form method="post" id="entrega-form">
+        {% csrf_token %}
+        
+        <!-- Informações da Entrega -->
+        <div style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 0.5rem;">
+                📋 Informações da Entrega
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                {% for field in form %}
+                {% if field.name != 'observacoes' %}
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ field.label }} {% if field.field.required %}*{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small style="color: #7f8c8d;">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ field.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            
+            <!-- Observações -->
+            <div style="margin-top: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                    {{ form.observacoes.label }}
+                </label>
+                {{ form.observacoes }}
+            </div>
+        </div>
+
+        <!-- Itens da Entrega -->
+        <div style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #27ae60; padding-bottom: 0.5rem;">
+                📦 Itens da Entrega
+            </h3>
+            
+            {{ formset.management_form }}
+            
+            <div id="formset-container">
+                {% for form in formset %}
+                <div class="item-form" style="border: 1px solid #eee; padding: 1.5rem; margin-bottom: 1rem; border-radius: 6px;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 2fr auto; gap: 1rem; align-items: start;">
+                        <!-- Produto com Busca Avançada -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                                Produto *
+                            </label>
+                            <div class="search-container" style="position: relative;">
+                                <input type="text" 
+                                       class="produto-search form-control" 
+                                       placeholder="Digite nome, SKU ou descrição do produto..."
+                                       autocomplete="off"
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px;" />
+                                <div class="input-group-append position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%);">
+                                    <span class="input-group-text bg-transparent border-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                </div>
+                                <!-- Campo oculto para o ID do produto -->
+                                {{ form.produto }}
+                                <!-- Resultados da busca -->
+                                <div class="search-results" style="display: none; position: absolute; z-index: 1000; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                            </div>
+                            {% if form.produto.errors %}
+                            <div style="color: #e74c3c; font-size: 0.9rem;">
+                                {{ form.produto.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Quantidade -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                                Quantidade *
+                            </label>
+                            {{ form.quantidade }}
+                            {% if form.quantidade.errors %}
+                            <div style="color: #e74c3c; font-size: 0.9rem;">
+                                {{ form.quantidade.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Observação -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                                Observação
+                            </label>
+                            {{ form.observacao }}
+                        </div>
+                        
+                        <!-- Deletar -->
+                        <div style="padding-top: 1.5rem;">
+                            {% if form.DELETE %}
+                            {{ form.DELETE }} <label for="{{ form.DELETE.id_for_label }}">Excluir</label>
+                            {% else %}
+                            <button type="button" class="btn-remover" style="background: #e74c3c; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
+                                🗑️
+                            </button>
+                            {% endif %}
+                            {{ form.id }}
+                        </div>
+                    </div>
+                    
+                    <!-- Informações do Produto -->
+                    <div class="produto-info" style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px; display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>SKU:</strong> <span class="produto-sku">-</span></div>
+                            <div><strong>Estoque Atual:</strong> <span class="estoque-atual">-</span></div>
+                            <div><strong>Preço:</strong> <span class="produto-preco">-</span></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <button type="button" id="btn-adicionar-item" class="btn" style="background: #27ae60; margin-top: 1rem;">
+                ➕ Adicionar Item
+            </button>
+        </div>
+
+        <!-- Resumo -->
+        <div style="background: #e8f4fd; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h4 style="margin-top: 0; color: #2980b9;">📊 Resumo da Entrega</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <strong>Total de Itens:</strong> <span id="total-itens">0</span>
+                </div>
+                <div>
+                    <strong>Total de Produtos:</strong> <span id="total-produtos">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn" style="background: #27ae60;">💾 Salvar Entrega</button>
+            <a href="{% url 'entrega:lista_entregas' %}" class="btn" style="background: #6c757d;">❌ Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Template para novos itens -->
+<div id="empty-form" style="display: none;">
+    <div class="item-form" style="border: 1px solid #eee; padding: 1.5rem; margin-bottom: 1rem; border-radius: 6px;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 2fr auto; gap: 1rem; align-items: start;">
+            <!-- Produto com Busca -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Produto *</label>
+                <div class="search-container" style="position: relative;">
+                    <input type="text" 
+                           class="produto-search form-control" 
+                           placeholder="Digite nome, SKU ou descrição do produto..."
+                           autocomplete="off"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px;" />
+                    <div class="input-group-append position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%);">
+                        <span class="input-group-text bg-transparent border-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                    </div>
+                    {{ formset.empty_form.produto }}
+                    <div class="search-results" style="display: none; position: absolute; z-index: 1000; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                </div>
+            </div>
+            <!-- Quantidade -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Quantidade *</label>
+                {{ formset.empty_form.quantidade }}
+            </div>
+            <!-- Observação -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Observação</label>
+                {{ formset.empty_form.observacao }}
+            </div>
+            <!-- Deletar -->
+            <div style="padding-top: 1.5rem;">
+                <button type="button" class="btn-remover" style="background: #e74c3c; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
+                    🗑️
+                </button>
+            </div>
+        </div>
+        <!-- Informações do Produto -->
+        <div class="produto-info" style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px; display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                <div><strong>SKU:</strong> <span class="produto-sku">-</span></div>
+                <div><strong>Estoque Atual:</strong> <span class="estoque-atual">-</span></div>
+                <div><strong>Preço:</strong> <span class="produto-preco">-</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando sistema de busca de produtos...');
+    
+    const formsetContainer = document.getElementById('formset-container');
+    const btnAdicionar = document.getElementById('btn-adicionar-item');
+    const totalForms = document.querySelector('input[name$="-TOTAL_FORMS"]');
+    const emptyForm = document.getElementById('empty-form').innerHTML;
+    let formCount = parseInt(totalForms?.value) || document.querySelectorAll('#formset-container .item-form').length;
+
+    console.log('📊 Forms count:', formCount);
+
+    // Dicionário para cache de produtos
+    const produtosCache = {};
+
+    // Função para buscar produtos via API - CORRIGIDA
+    function buscarProdutos(query, searchInput, resultsDiv, produtoSelect) {
+        console.log('🔍 Buscando produtos para:', query);
+        
+        if (query.length < 2) {
+            console.log('❌ Query muito curta');
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        // Mostrar loading
+        resultsDiv.innerHTML = `
+            <div style="padding: 1rem; text-align: center; color: #6c757d;">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                Buscando produtos...
+            </div>
+        `;
+        resultsDiv.style.display = 'block';
+
+        // URL da API de busca de produtos - CORRIGIDA
+        // Vamos testar diferentes endpoints possíveis
+        const endpoints = [
+            '/produtos/api/buscar_produtos/',
+            '/api/buscar_produtos/',
+            '{% url "produto:buscar_produtos_api" %}'
+        ];
+
+        let currentEndpoint = 0;
+        
+        function tryEndpoint() {
+            if (currentEndpoint >= endpoints.length) {
+                console.error('❌ Todos os endpoints falharam');
+                resultsDiv.innerHTML = `
+                    <div style="padding: 1rem; text-align: center; color: #e74c3c;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erro: API não encontrada
+                    </div>
+                `;
+                return;
+            }
+
+            const endpoint = endpoints[currentEndpoint];
+            const url = `${endpoint}?q=${encodeURIComponent(query)}`;
+            
+            console.log('🌐 Tentando endpoint:', url);
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('📨 Status da resposta:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Dados recebidos:', data);
+                if (data.resultados && data.resultados.length > 0) {
+                    exibirResultadosBusca(data.resultados, resultsDiv, searchInput, produtoSelect);
+                } else if (data.length > 0) {
+                    // Formato alternativo: array direto
+                    exibirResultadosBusca(data, resultsDiv, searchInput, produtoSelect);
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div style="padding: 1rem; text-align: center; color: #6c757d;">
+                            <i class="fas fa-search me-2"></i>
+                            Nenhum produto encontrado para "${query}"
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error(`❌ Erro no endpoint ${endpoint}:`, error);
+                currentEndpoint++;
+                tryEndpoint(); // Tentar próximo endpoint
+            });
+        }
+
+        tryEndpoint();
+    }
+
+    // Exibir resultados da busca - CORRIGIDA
+    function exibirResultadosBusca(resultados, resultsDiv, searchInput, produtoSelect) {
+        console.log('📋 Exibindo resultados:', resultados.length);
+        
+        let html = '';
+        
+        resultados.forEach(produto => {
+            // Extrair dados do produto (formatos diferentes)
+            const produtoId = produto.id || produto.pk;
+            const produtoNome = produto.nome || produto.name || 'Nome não disponível';
+            const produtoSku = produto.sku || produto.codigo || 'N/A';
+            const produtoCategoria = produto.categoria || produto.category || '';
+            const produtoEstoque = produto.estoque_atual || produto.estoque || 0;
+            const produtoPreco = produto.preco_venda || produto.preco || produto.valor || '0.00';
+            
+            // Armazenar no cache
+            produtosCache[produtoId] = {
+                id: produtoId,
+                nome: produtoNome,
+                sku: produtoSku,
+                categoria: produtoCategoria,
+                estoque_atual: produtoEstoque,
+                preco_venda: produtoPreco
+            };
+            
+            html += `
+                <div class="resultado-item" 
+                     style="padding: 0.75rem; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s;"
+                     onclick="selecionarProduto(${produtoId}, '${produtoNome.replace(/'/g, "\\'")}', this)">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex-grow: 1;">
+                            <strong style="display: block; margin-bottom: 0.25rem;">${produtoNome}</strong>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <span style="background: #e9ecef; color: #495057; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem; font-family: monospace;">
+                                    ${produtoSku}
+                                </span>
+                                ${produtoCategoria ? `<span style="background: #17a2b8; color: white; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem;">${produtoCategoria}</span>` : ''}
+                            </div>
+                            <div style="font-size: 0.85rem; color: #6c757d;">
+                                📦 Estoque: ${produtoEstoque} | 💰 Preço: R$ ${produtoPreco}
+                            </div>
+                        </div>
+                        <div style="color: #6c757d; padding-left: 0.5rem;">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // Adicionar footer com contagem
+        html += `
+            <div style="padding: 0.5rem; text-align: center; background: #f8f9fa; border-top: 1px solid #eee; font-size: 0.8rem; color: #6c757d;">
+                ${resultados.length} produto(s) encontrado(s)
+            </div>
+        `;
+        
+        resultsDiv.innerHTML = html;
+        console.log('✅ Resultados exibidos com sucesso');
+    }
+
+    // Selecionar produto - CORRIGIDA
+    window.selecionarProduto = function(produtoId, produtoNome, elemento) {
+        console.log('🎯 Selecionando produto:', produtoId, produtoNome);
+        
+        const itemForm = elemento.closest('.item-form');
+        const searchInput = itemForm.querySelector('.produto-search');
+        const resultsDiv = itemForm.querySelector('.search-results');
+        const produtoSelect = itemForm.querySelector('select[name$="-produto"]');
+        const produtoInfo = itemForm.querySelector('.produto-info');
+        
+        if (!produtoSelect) {
+            console.error('❌ Select do produto não encontrado');
+            return;
+        }
+        
+        // Atualizar campos
+        searchInput.value = produtoNome;
+        produtoSelect.value = produtoId;
+        resultsDiv.style.display = 'none';
+        
+        console.log('✅ Campos atualizados:', {
+            searchInput: searchInput.value,
+            produtoSelect: produtoSelect.value
+        });
+        
+        // Atualizar informações do produto
+        const produto = produtosCache[produtoId];
+        if (produto) {
+            const skuSpan = itemForm.querySelector('.produto-sku');
+            const estoqueSpan = itemForm.querySelector('.estoque-atual');
+            const precoSpan = itemForm.querySelector('.produto-preco');
+            
+            if (skuSpan) skuSpan.textContent = produto.sku;
+            if (estoqueSpan) estoqueSpan.textContent = produto.estoque_atual;
+            if (precoSpan) precoSpan.textContent = `R$ ${produto.preco_venda}`;
+            
+            produtoInfo.style.display = 'block';
+            console.log('✅ Informações do produto atualizadas');
+        } else {
+            console.warn('⚠️ Produto não encontrado no cache:', produtoId);
+        }
+        
+        // Disparar evento de change para atualizar validações
+        const event = new Event('change', { bubbles: true });
+        produtoSelect.dispatchEvent(event);
+        
+        atualizarResumo();
+    };
+
+    // Configurar busca para um item - CORRIGIDA
+    function configurarBuscaItem(itemForm) {
+        console.log('⚙️ Configurando busca para item:', itemForm);
+        
+        const searchInput = itemForm.querySelector('.produto-search');
+        const resultsDiv = itemForm.querySelector('.search-results');
+        const produtoSelect = itemForm.querySelector('select[name$="-produto"]');
+        
+        if (!searchInput || !resultsDiv) {
+            console.error('❌ Elementos de busca não encontrados no item');
+            return;
+        }
+        
+        console.log('✅ Elementos encontrados:', { searchInput, resultsDiv, produtoSelect });
+        
+        let timeoutId;
+        
+        // Evento de input para busca
+        searchInput.addEventListener('input', function() {
+            clearTimeout(timeoutId);
+            const query = this.value.trim();
+            
+            console.log('⌨️ Input detectado:', query);
+            
+            if (query.length < 2) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+            
+            timeoutId = setTimeout(() => {
+                buscarProdutos(query, searchInput, resultsDiv, produtoSelect);
+            }, 400); // Aumentado para melhor UX
+        });
+        
+        // Fechar resultados ao clicar fora
+        document.addEventListener('click', function(event) {
+            if (!itemForm.contains(event.target) && event.target !== searchInput) {
+                resultsDiv.style.display = 'none';
+            }
+        });
+        
+        // Tecla ESC para fechar
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                resultsDiv.style.display = 'none';
+                searchInput.blur();
+            }
+        });
+        
+        // Esconder o select original
+        if (produtoSelect) {
+            produtoSelect.style.display = 'none';
+            console.log('✅ Select original escondido');
+        }
+        
+        // Preencher campo de busca se já tiver produto selecionado
+        if (produtoSelect && produtoSelect.value) {
+            const produtoId = produtoSelect.value;
+            if (produtosCache[produtoId]) {
+                searchInput.value = produtosCache[produtoId].nome;
+            } else {
+                // Tentar buscar da option selecionada
+                const selectedOption = produtoSelect.querySelector(`option[value="${produtoId}"]`);
+                if (selectedOption) {
+                    searchInput.value = selectedOption.textContent.trim();
+                    console.log('✅ Campo preenchido da option:', searchInput.value);
+                }
+            }
+        }
+    }
+
+    // Adicionar novo item - CORRIGIDA
+    btnAdicionar.addEventListener('click', function() {
+        console.log('➕ Adicionando novo item...');
+        
+        const newFormHtml = emptyForm.replace(/__prefix__/g, formCount);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newFormHtml;
+        
+        const newForm = tempDiv.firstElementChild;
+        formsetContainer.appendChild(newForm);
+        
+        // Atualizar contador
+        formCount++;
+        if (totalForms) {
+            totalForms.value = formCount;
+        }
+        
+        console.log('✅ Novo item adicionado, formCount:', formCount);
+        
+        // Configurar busca para o novo item
+        setTimeout(() => {
+            configurarBuscaItem(newForm);
+        }, 100);
+        
+        // Adicionar evento de remoção
+        const btnRemover = newForm.querySelector('.btn-remover');
+        if (btnRemover) {
+            btnRemover.addEventListener('click', function() {
+                console.log('🗑️ Removendo item...');
+                newForm.remove();
+                atualizarResumo();
+            });
+        }
+        
+        // Adicionar eventos para quantidade
+        const quantidadeInput = newForm.querySelector('input[type="number"]');
+        if (quantidadeInput) {
+            quantidadeInput.addEventListener('input', atualizarResumo);
+        }
+        
+        atualizarResumo();
+    });
+
+    // Remover item
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-remover')) {
+            console.log('🗑️ Removendo item via click...');
+            e.target.closest('.item-form').remove();
+            atualizarResumo();
+        }
+    });
+
+    // Atualizar resumo
+    function atualizarResumo() {
+        let totalItens = 0;
+        let totalProdutos = 0;
+        
+        document.querySelectorAll('.item-form').forEach(form => {
+            const quantidadeInput = form.querySelector('input[type="number"]');
+            const produtoSelect = form.querySelector('select[name$="-produto"]');
+            
+            if (quantidadeInput && quantidadeInput.value && produtoSelect && produtoSelect.value) {
+                totalItens += parseInt(quantidadeInput.value) || 0;
+                totalProdutos++;
+            }
+        });
+        
+        document.getElementById('total-itens').textContent = totalItens;
+        document.getElementById('total-produtos').textContent = totalProdutos;
+        
+        console.log('📊 Resumo atualizado:', { totalItens, totalProdutos });
+    }
+
+    // Inicializar busca nos forms existentes
+    console.log('🔧 Inicializando forms existentes...');
+    document.querySelectorAll('.item-form').forEach((form, index) => {
+        console.log(`🔧 Configurando form ${index + 1}...`);
+        configurarBuscaItem(form);
+        
+        // Adicionar eventos para quantidade
+        const quantidadeInput = form.querySelector('input[type="number"]');
+        if (quantidadeInput) {
+            quantidadeInput.addEventListener('input', atualizarResumo);
+        }
+    });
+    
+    // Inicializar resumo
+    atualizarResumo();
+    
+    console.log('✅ Sistema de busca inicializado com sucesso!');
+});
+
+// Função de fallback para teste manual
+function testarBuscaManual() {
+    const query = prompt('Digite um termo para testar a busca:');
+    if (query) {
+        console.log('🧪 Teste manual:', query);
+        // Aqui você pode testar a busca manualmente
+    }
+}
+</script>
+
+<style>
+    .search-results {
+        z-index: 1000;
+    }
+    
+    .resultado-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    /* Estilos para debug */
+    .debug-panel {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #2c3e50;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        z-index: 10000;
+    }
+</style>
+
+<!-- Painel de debug (opcional) -->
+<div class="debug-panel" style="display: none;">
+    <button onclick="testarBuscaManual()" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+        Testar Busca
+    </button>
+</div>
+
+{% endblock %}

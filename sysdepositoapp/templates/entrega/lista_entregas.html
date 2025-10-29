@@ -1,0 +1,234 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Lista de Entregas - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto;">
+    <!-- Cabeçalho -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>📋 Lista de Entregas</h2>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'entrega:nova_entrega' %}" class="btn" style="background: #27ae60;">➕ Nova Entrega</a>
+            <a href="{% url 'entrega:dashboard_entregas' %}" class="btn" style="background: #6c757d;">📊 Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <form method="get">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Status</label>
+                    {{ form.status }}
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Tipo de Entrega</label>
+                    {{ form.tipo_entrega }}
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Escola</label>
+                    {{ form.escola }}
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Data Início</label>
+                    {{ form.data_inicio }}
+                </div>
+                
+                <div>
+                    <button type="submit" class="btn" style="background: #3498db;">🔍 Filtrar</button>
+                    <a href="{% url 'entrega:lista_entregas' %}" class="btn" style="background: #6c757d; margin-top: 0.5rem; display: block;">🔄 Limpar</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center; border-left: 4px solid #3498db;">
+            <h3 style="margin: 0; color: #3498db;">{{ total_entregas }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Total</p>
+        </div>
+        <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center; border-left: 4px solid #f39c12;">
+            <h3 style="margin: 0; color: #f39c12;">{{ entregas_planejadas }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Planejadas</p>
+        </div>
+        <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center; border-left: 4px solid #3498db;">
+            <h3 style="margin: 0; color: #3498db;">{{ entregas_preparacao }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Preparação</p>
+        </div>
+        <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center; border-left: 4px solid #9b59b6;">
+            <h3 style="margin: 0; color: #9b59b6;">{{ entregas_transporte }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Transporte</p>
+        </div>
+        <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center; border-left: 4px solid #27ae60;">
+            <h3 style="margin: 0; color: #27ae60;">{{ entregas_entregues }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Entregues</p>
+        </div>
+        <div style="background: white; padding: 1rem; border-radius: 8px; text-align: center; border-left: 4px solid #e74c3c;">
+            <h3 style="margin: 0; color: #e74c3c;">{{ entregas_atrasadas }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Atrasadas</p>
+        </div>
+    </div>
+
+    <!-- Tabela de Entregas -->
+    <div style="background: white; border-radius: 8px; overflow: hidden;">
+        {% if entregas %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+                <thead>
+                    <tr style="background: #2c3e50; color: white;">
+                        <th style="padding: 1rem; text-align: left;">Pedido</th>
+                        <th style="padding: 1rem; text-align: left;">Escola</th>
+                        <th style="padding: 1rem; text-align: center;">Status</th>
+                        <th style="padding: 1rem; text-align: center;">Tipo</th>
+                        <th style="padding: 1rem; text-align: center;">Data Prevista</th>
+                        <th style="padding: 1rem; text-align: center;">Itens</th>
+                        <th style="padding: 1rem; text-align: left;">Responsável</th>
+                        <th style="padding: 1rem; text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entrega in entregas %}
+                    <tr style="border-bottom: 1px solid #eee; {% if entrega.atrasada %}background: #fff5f5;{% endif %}">
+                        <td style="padding: 1rem;">
+                            <strong>{{ entrega.numero_pedido }}</strong>
+                            <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                {{ entrega.data_criacao|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td style="padding: 1rem;">
+                            <strong>{{ entrega.escola.nome }}</strong>
+                            {% if entrega.escola.responsavel %}
+                            <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                {{ entrega.escola.responsavel }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            {% if entrega.status == 'planejada' %}
+                            <span style="background: #f39c12; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                📋 Planejada
+                            </span>
+                            {% elif entrega.status == 'preparacao' %}
+                            <span style="background: #3498db; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                📦 Preparação
+                            </span>
+                            {% elif entrega.status == 'transporte' %}
+                            <span style="background: #9b59b6; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                🚚 Transporte
+                            </span>
+                            {% elif entrega.status == 'entregue' %}
+                            <span style="background: #27ae60; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                ✅ Entregue
+                            </span>
+                            {% elif entrega.status == 'cancelada' %}
+                            <span style="background: #e74c3c; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                ❌ Cancelada
+                            </span>
+                            {% endif %}
+                            
+                            {% if entrega.atrasada %}
+                            <div style="color: #e74c3c; font-size: 0.7rem; margin-top: 0.25rem;">
+                                ⚠️ Atrasada
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            {% if entrega.tipo_entrega == 'urgente' %}
+                            <span style="background: #e74c3c; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                URGENTE
+                            </span>
+                            {% elif entrega.tipo_entrega == 'agendada' %}
+                            <span style="background: #3498db; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                AGENDADA
+                            </span>
+                            {% else %}
+                            <span style="background: #7f8c8d; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">
+                                NORMAL
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <div style="font-weight: bold; {% if entrega.atrasada %}color: #e74c3c;{% endif %}">
+                                {{ entrega.data_entrega_prevista|date:"d/m/Y" }}
+                            </div>
+                            {% if entrega.data_entrega_real %}
+                            <div style="color: #27ae60; font-size: 0.8rem;">
+                                Entregue: {{ entrega.data_entrega_real|date:"d/m/Y" }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <strong>{{ entrega.total_produtos }}</strong>
+                            <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                {{ entrega.total_itens }} un
+                            </div>
+                        </td>
+                        <td style="padding: 1rem;">
+                            {{ entrega.responsavel_entrega }}
+                            {% if entrega.motorista %}
+                            <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                Motorista: {{ entrega.motorista }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <a href="{% url 'entrega:detalhe_entrega' entrega.pk %}" 
+                               style="color: #3498db; margin: 0 0.25rem;" title="Ver detalhes">👁️</a>
+                            <a href="{% url 'entrega:editar_entrega' entrega.pk %}" 
+                               style="color: #f39c12; margin: 0 0.25rem;" title="Editar">✏️</a>
+                            {% if entrega.status != 'entregue' and entrega.status != 'cancelada' %}
+                            <a href="{% url 'entrega:finalizar_entrega' entrega.pk %}" 
+                               style="color: #27ae60; margin: 0 0.25rem;" title="Finalizar entrega"
+                               onclick="return confirm('Tem certeza que deseja finalizar esta entrega? O estoque será atualizado.')">✅</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="padding: 3rem; text-align: center; color: #7f8c8d;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📝</div>
+            <h3 style="margin-bottom: 0.5rem;">Nenhuma entrega encontrada</h3>
+            <p>Não há entregas registradas com os filtros atuais.</p>
+            <a href="{% url 'entrega:nova_entrega' %}" class="btn" style="background: #27ae60; display: inline-block; margin-top: 1rem;">
+                ➕ Criar Primeira Entrega
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+    
+    select, input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}

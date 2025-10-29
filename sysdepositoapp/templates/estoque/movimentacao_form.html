@@ -1,0 +1,458 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ titulo }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>{{ titulo }}</h2>
+        <a href="{% url 'estoque:lista_movimentacoes' %}" class="btn" style="background: #6c757d;">← Voltar</a>
+    </div>
+
+    <div style="background: white; padding: 2rem; border-radius: 8px;">
+        <form method="post" id="movimentacao-form">
+            {% csrf_token %}
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- Produto com Autocomplete -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.produto.label }} *
+                    </label>
+                    <div class="search-container" style="position: relative;">
+                        <input type="text" 
+                               class="produto-search form-control" 
+                               placeholder="Digite nome, SKU ou descrição do produto..."
+                               autocomplete="off"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px;" />
+                        <div class="input-group-append position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%);">
+                            <span class="input-group-text bg-transparent border-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                        </div>
+                        <!-- Campo oculto para o ID do produto -->
+                        {{ form.produto }}
+                        <!-- Resultados da busca -->
+                        <div class="search-results" style="display: none; position: absolute; z-index: 1000; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                    </div>
+                    {% if form.produto.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.produto.errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Informações do Produto Selecionado -->
+                    <div class="produto-info" style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px; display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>SKU:</strong> <span class="produto-sku">-</span></div>
+                            <div><strong>Estoque Atual:</strong> <span class="estoque-atual">-</span></div>
+                            <div><strong>Preço:</strong> <span class="produto-preco">-</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tipo -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.tipo.label }} *
+                    </label>
+                    {{ form.tipo }}
+                    {% if form.tipo.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.tipo.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quantidade -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.quantidade.label }} *
+                    </label>
+                    {{ form.quantidade }}
+                    {% if form.quantidade.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.quantidade.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Motivo -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.motivo.label }} *
+                    </label>
+                    {{ form.motivo }}
+                    {% if form.motivo.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.motivo.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Data de Ocorrência -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.data_ocorrencia.label }}
+                    </label>
+                    {{ form.data_ocorrencia }}
+                    {% if form.data_ocorrencia.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.data_ocorrencia.errors }}
+                    </div>
+                    {% endif %}
+                    <small style="color: #7f8c8d;">Deixe em branco para data atual</small>
+                </div>
+
+                <!-- Observação -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        {{ form.observacao.label }}
+                    </label>
+                    {{ form.observacao }}
+                    {% if form.observacao.errors %}
+                    <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                        {{ form.observacao.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn" style="background: #27ae60;">💾 Salvar Movimentação</button>
+                <a href="{% url 'estoque:lista_movimentacoes' %}" class="btn" style="background: #6c757d;">❌ Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Informações de Ajuda -->
+    <div style="background: #e8f4fd; padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+        <h4 style="margin-top: 0; color: #2980b9;">💡 Informações</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <strong>Entrada (E):</strong>
+                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                    <li>Compra de produtos</li>
+                    <li>Devolução de cliente</li>
+                    <li>Produção própria</li>
+                    <li>Ajuste positivo</li>
+                </ul>
+            </div>
+            <div>
+                <strong>Saída (S):</strong>
+                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                    <li>Venda de produtos</li>
+                    <li>Devolução ao fornecedor</li>
+                    <li>Perda/danificado</li>
+                    <li>Ajuste negativo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .search-results {
+        z-index: 1000;
+    }
+    
+    .resultado-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .produto-info {
+        transition: all 0.3s ease;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando autocomplete de produtos...');
+    
+    // Elementos do DOM
+    const searchInput = document.querySelector('.produto-search');
+    const resultsDiv = document.querySelector('.search-results');
+    const produtoSelect = document.querySelector('#{{ form.produto.id_for_label }}');
+    const produtoInfo = document.querySelector('.produto-info');
+    const tipoSelect = document.querySelector('#{{ form.tipo.id_for_label }}');
+    const quantidadeInput = document.querySelector('#{{ form.quantidade.id_for_label }}');
+    
+    // Dicionário para cache de produtos
+    const produtosCache = {};
+    let timeoutId;
+
+    // Função para buscar produtos via API
+    function buscarProdutos(query) {
+        if (query.length < 2) {
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        // Mostrar loading
+        resultsDiv.innerHTML = `
+            <div style="padding: 1rem; text-align: center; color: #6c757d;">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                Buscando produtos...
+            </div>
+        `;
+        resultsDiv.style.display = 'block';
+
+        // URL da API de busca de produtos
+        const endpoints = [
+            '/produtos/api/buscar_produtos/',
+            '/api/buscar_produtos/',
+            '{% url "produto:buscar_produtos_api" %}'
+        ];
+
+        let currentEndpoint = 0;
+        
+        function tryEndpoint() {
+            if (currentEndpoint >= endpoints.length) {
+                resultsDiv.innerHTML = `
+                    <div style="padding: 1rem; text-align: center; color: #e74c3c;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erro: API não encontrada
+                    </div>
+                `;
+                return;
+            }
+
+            const endpoint = endpoints[currentEndpoint];
+            const url = `${endpoint}?q=${encodeURIComponent(query)}`;
+            
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.resultados && data.resultados.length > 0) {
+                    exibirResultadosBusca(data.resultados);
+                } else if (data.length > 0) {
+                    exibirResultadosBusca(data);
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div style="padding: 1rem; text-align: center; color: #6c757d;">
+                            <i class="fas fa-search me-2"></i>
+                            Nenhum produto encontrado para "${query}"
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                currentEndpoint++;
+                tryEndpoint();
+            });
+        }
+
+        tryEndpoint();
+    }
+
+    // Exibir resultados da busca
+    function exibirResultadosBusca(resultados) {
+        let html = '';
+        
+        resultados.forEach(produto => {
+            const produtoId = produto.id || produto.pk;
+            const produtoNome = produto.nome || produto.name || 'Nome não disponível';
+            const produtoSku = produto.sku || produto.codigo || 'N/A';
+            const produtoCategoria = produto.categoria || produto.category || '';
+            const produtoEstoque = produto.estoque_atual || produto.estoque || 0;
+            const produtoPreco = produto.preco_venda || produto.preco || produto.valor || '0.00';
+            
+            // Armazenar no cache
+            produtosCache[produtoId] = {
+                id: produtoId,
+                nome: produtoNome,
+                sku: produtoSku,
+                categoria: produtoCategoria,
+                estoque_atual: produtoEstoque,
+                preco_venda: produtoPreco
+            };
+            
+            html += `
+                <div class="resultado-item" 
+                     style="padding: 0.75rem; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s;"
+                     onclick="selecionarProduto(${produtoId}, '${produtoNome.replace(/'/g, "\\'")}')">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex-grow: 1;">
+                            <strong style="display: block; margin-bottom: 0.25rem;">${produtoNome}</strong>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <span style="background: #e9ecef; color: #495057; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem; font-family: monospace;">
+                                    ${produtoSku}
+                                </span>
+                                ${produtoCategoria ? `<span style="background: #17a2b8; color: white; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem;">${produtoCategoria}</span>` : ''}
+                            </div>
+                            <div style="font-size: 0.85rem; color: #6c757d;">
+                                📦 Estoque: ${produtoEstoque} | 💰 Preço: R$ ${produtoPreco}
+                            </div>
+                        </div>
+                        <div style="color: #6c757d; padding-left: 0.5rem;">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+            <div style="padding: 0.5rem; text-align: center; background: #f8f9fa; border-top: 1px solid #eee; font-size: 0.8rem; color: #6c757d;">
+                ${resultados.length} produto(s) encontrado(s)
+            </div>
+        `;
+        
+        resultsDiv.innerHTML = html;
+    }
+
+    // Selecionar produto
+    window.selecionarProduto = function(produtoId, produtoNome) {
+        console.log('🎯 Selecionando produto:', produtoId, produtoNome);
+        
+        // Atualizar campos
+        searchInput.value = produtoNome;
+        produtoSelect.value = produtoId;
+        resultsDiv.style.display = 'none';
+        
+        // Atualizar informações do produto
+        const produto = produtosCache[produtoId];
+        if (produto) {
+            const skuSpan = document.querySelector('.produto-sku');
+            const estoqueSpan = document.querySelector('.estoque-atual');
+            const precoSpan = document.querySelector('.produto-preco');
+            
+            if (skuSpan) skuSpan.textContent = produto.sku;
+            if (estoqueSpan) estoqueSpan.textContent = produto.estoque_atual;
+            if (precoSpan) precoSpan.textContent = `R$ ${produto.preco_venda}`;
+            
+            produtoInfo.style.display = 'block';
+            
+            // Validação automática para saídas
+            if (tipoSelect && tipoSelect.value === 'S' || tipoSelect.value === 'SAIDA') {
+                validarQuantidadeSaida(produto.estoque_atual);
+            }
+        }
+        
+        console.log('✅ Produto selecionado:', produtoNome);
+    };
+
+    // Validar quantidade para saídas
+    function validarQuantidadeSaida(estoqueAtual) {
+        if (quantidadeInput && quantidadeInput.value) {
+            const quantidade = parseInt(quantidadeInput.value);
+            if (quantidade > estoqueAtual) {
+                quantidadeInput.style.borderColor = '#e74c3c';
+                quantidadeInput.title = `Estoque insuficiente! Disponível: ${estoqueAtual}`;
+            } else {
+                quantidadeInput.style.borderColor = '';
+                quantidadeInput.title = '';
+            }
+        }
+    }
+
+    // Evento de input para busca
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(timeoutId);
+            const query = this.value.trim();
+            
+            timeoutId = setTimeout(() => {
+                buscarProdutos(query);
+            }, 400);
+        });
+    }
+
+    // Evento para tipo de movimentação (validação de saída)
+    if (tipoSelect) {
+        tipoSelect.addEventListener('change', function() {
+            const produtoId = produtoSelect.value;
+            if (produtoId && produtosCache[produtoId] && (this.value === 'S' || this.value === 'SAIDA')) {
+                validarQuantidadeSaida(produtosCache[produtoId].estoque_atual);
+            }
+        });
+    }
+
+    // Evento para quantidade (validação)
+    if (quantidadeInput) {
+        quantidadeInput.addEventListener('input', function() {
+            const produtoId = produtoSelect.value;
+            if (produtoId && produtosCache[produtoId] && tipoSelect && (tipoSelect.value === 'S' || tipoSelect.value === 'SAIDA')) {
+                validarQuantidadeSaida(produtosCache[produtoId].estoque_atual);
+            }
+        });
+    }
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', function(event) {
+        if (!searchInput.contains(event.target) && !resultsDiv.contains(event.target)) {
+            resultsDiv.style.display = 'none';
+        }
+    });
+
+    // Tecla ESC para fechar
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                resultsDiv.style.display = 'none';
+                searchInput.blur();
+            }
+        });
+    }
+
+    // Esconder o select original
+    if (produtoSelect) {
+        produtoSelect.style.display = 'none';
+    }
+
+    // Preencher campo de busca se já tiver produto selecionado
+    if (produtoSelect && produtoSelect.value) {
+        const produtoId = produtoSelect.value;
+        // Tentar buscar da option selecionada
+        const selectedOption = produtoSelect.querySelector(`option[value="${produtoId}"]`);
+        if (selectedOption) {
+            searchInput.value = selectedOption.textContent.trim();
+            // Disparar seleção para carregar informações
+            setTimeout(() => {
+                if (produtosCache[produtoId]) {
+                    window.selecionarProduto(produtoId, produtosCache[produtoId].nome);
+                }
+            }, 100);
+        }
+    }
+
+    console.log('✅ Autocomplete de produtos inicializado com sucesso!');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,405 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ titulo }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Cabeçalho -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus-circle{% endif %} text-primary me-2"></i>
+                        {{ titulo }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if form.instance.pk %}
+                        Editando registro existente
+                        {% else %}
+                        Preencha os dados abaixo para criar um novo registro
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{% url 'produto:lista_produtos' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+
+            <!-- Alertas -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fs-5"></i>
+                    <div>
+                        <h6 class="alert-heading mb-2">Erro no Formulário</h6>
+                        {% for error in form.non_field_errors %}
+                            <p class="mb-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+
+            <!-- Card do Formulário -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informações do Registro
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="main-form" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            {% for field in form %}
+                                {% if field.name == 'ativa' or field.name == 'status_ativo' %}
+                                <!-- Campo Ativo - Versão Melhorada -->
+                                <div class="col-12">
+                                    <div class="form-check form-switch mb-3 p-0">
+                                        <div class="card border">
+                                            <div class="card-body py-3">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="toggle-switch me-3">
+                                                            {{ field }}
+                                                            <label class="form-check-label" for="{{ field.id_for_label }}"></label>
+                                                        </div>
+                                                        <div>
+                                                            <label class="form-check-label fw-bold mb-0" for="{{ field.id_for_label }}">
+                                                                {{ field.label }}
+                                                            </label>
+                                                            {% if field.help_text %}
+                                                            <div class="form-text mt-1">
+                                                                {{ field.help_text }}
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    <div class="status-indicator">
+                                                        <span class="badge bg-success" id="status-text">Ativo</span>
+                                                        <span class="badge bg-danger d-none" id="status-text-inactive">Inativo</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% if field.errors %}
+                                        <div class="invalid-feedback d-block mt-2">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            {{ field.errors }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <!-- Campos Normais -->
+                                <div class="col-12 {% if field.name in 'preco_custo,preco_venda,estoque_minimo,estoque_atual' %}col-md-6{% endif %}">
+                                    <div class="form-floating">
+                                        {{ field }}
+                                        <label for="{{ field.id_for_label }}">
+                                            {{ field.label }}
+                                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                        </label>
+                                        
+                                        {% if field.help_text %}
+                                        <div class="form-text mt-1">
+                                            <i class="fas fa-info-circle me-1 text-info"></i>
+                                            {{ field.help_text }}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if field.errors %}
+                                        <div class="invalid-feedback d-block mt-1">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            {{ field.errors }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <!-- Botões de Ação -->
+                        <div class="d-flex gap-2 justify-content-end mt-5 pt-4 border-top">
+                            <a href="{% url 'produto:lista_produtos' %}" class="btn btn-lg btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-lg btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>
+                                {% if form.instance.pk %}Atualizar{% else %}Criar{% endif %} Registro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Dicas de Preenchimento -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>Dicas de Preenchimento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-3 mb-md-0">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Campos marcados com <span class="text-danger">*</span> são obrigatórios
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Verifique os dados antes de salvar
+                                </li>
+                                <li>
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Use descrições claras e objetivas
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <i class="fas fa-toggle-on text-success me-2"></i>
+                                    Produtos inativos não aparecem para venda
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Mantenha os preços atualizados
+                                </li>
+                                <li>
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Configure estoques mínimos adequados
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
+
+    .form-control.is-invalid {
+        border-color: #e74c3c;
+        box-shadow: 0 0 0 0.25rem rgba(231, 76, 60, 0.25);
+    }
+
+    .form-control:disabled, .form-control[readonly] {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    }
+
+    /* Estilo para campos numéricos */
+    input[type="number"] {
+        text-align: right;
+    }
+
+    /* Estilo para textareas */
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Toggle Switch Melhorado */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+    }
+
+    .form-check-input {
+        width: 3.5rem !important;
+        height: 1.75rem !important;
+        margin: 0 !important;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #27ae60 !important;
+        border-color: #27ae60 !important;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(39, 174, 96, 0.25) !important;
+        border-color: #27ae60 !important;
+    }
+
+    .form-check-input:not(:checked) {
+        background-color: #e74c3c !important;
+        border-color: #e74c3c !important;
+    }
+
+    .status-indicator .badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.50rem; /* Adiciona margem no topo para descer */
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    /* Loading state para o botão */
+    .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* Efeito hover no card do toggle */
+    .form-check.form-switch .card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .form-check.form-switch .card:hover {
+        border-color: #3498db;
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('main-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const ativoField = form.querySelector('input[type="checkbox"]');
+    
+    // Função para atualizar o status do toggle
+    function updateToggleStatus() {
+        const statusText = document.getElementById('status-text');
+        const statusTextInactive = document.getElementById('status-text-inactive');
+        
+        if (ativoField.checked) {
+            statusText.classList.remove('d-none');
+            statusTextInactive.classList.add('d-none');
+        } else {
+            statusText.classList.add('d-none');
+            statusTextInactive.classList.remove('d-none');
+        }
+    }
+
+    // Adicionar classes Bootstrap aos campos
+    function initializeFormFields() {
+        const fields = form.querySelectorAll('input, select, textarea');
+        
+        fields.forEach(field => {
+            if (!field.classList.contains('btn') && field.type !== 'checkbox') {
+                field.classList.add('form-control');
+                
+                // Adicionar validação em tempo real
+                field.addEventListener('blur', function() {
+                    validateField(this);
+                });
+                
+                // Estilo especial para campos desabilitados
+                if (field.disabled || field.readOnly) {
+                    field.classList.add('disabled-field');
+                }
+            }
+        });
+        
+        // Estilo especial para o checkbox (toggle)
+        if (ativoField) {
+            ativoField.classList.add('form-check-input');
+            // Atualizar status inicial
+            updateToggleStatus();
+            // Adicionar evento de change
+            ativoField.addEventListener('change', updateToggleStatus);
+        }
+    }
+
+    // Validação de campo individual
+    function validateField(field) {
+        if (field.hasAttribute('required') && !field.value.trim()) {
+            field.classList.add('is-invalid');
+            return false;
+        } else {
+            field.classList.remove('is-invalid');
+            return true;
+        }
+    }
+
+    // Validação do formulário
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            if (!validateField(field)) {
+                isValid = false;
+            }
+        });
+
+        if (!isValid) {
+            e.preventDefault();
+            
+            // Mostrar alerta
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+            alertDiv.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fs-5"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Campos obrigatórios não preenchidos</h6>
+                        <p class="mb-0">Por favor, preencha todos os campos marcados com <span class="text-danger">*</span></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const existingAlert = form.querySelector('.alert');
+            if (!existingAlert) {
+                form.insertBefore(alertDiv, form.firstChild);
+            }
+
+            // Scroll para o primeiro erro
+            const firstInvalid = form.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus();
+            }
+        } else {
+            // Mostrar loading no botão
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
+            }
+        }
+    });
+
+    // Inicialização
+    initializeFormFields();
+
+    // Focar no primeiro campo editável
+    const firstField = form.querySelector('input:not([disabled]):not([readonly]):not([type="checkbox"]), select:not([disabled]), textarea:not([disabled]):not([readonly])');
+    if (firstField) {
+        setTimeout(() => {
+            firstField.focus();
+        }, 300);
+    }
+});
+</script>
+{% endblock %}

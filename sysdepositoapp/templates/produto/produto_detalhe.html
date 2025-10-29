@@ -1,0 +1,200 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}{{ produto.nome }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <!-- Cabeçalho -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2>{{ produto.nome }}</h2>
+            <p style="color: #7f8c8d; margin: 0;">SKU: {{ produto.sku }}</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'produto:produto_editar' produto.pk %}" class="btn" style="background: #f39c12;">✏️ Editar</a>
+            <a href="{% url 'produto:lista_produtos' %}" class="btn" style="background: #6c757d;">← Voltar</a>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Informações Principais -->
+        <div>
+            <!-- Card de Informações Básicas -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="margin-top: 0; color: #2c3e50;">Informações do Produto</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <strong>Nome:</strong>
+                        <p style="margin: 0.5rem 0;">{{ produto.nome }}</p>
+                    </div>
+                    <div>
+                        <strong>SKU:</strong>
+                        <p style="margin: 0.5rem 0;">{{ produto.sku }}</p>
+                    </div>
+                    <div>
+                        <strong>Categoria:</strong>
+                        <p style="margin: 0.5rem 0;">{{ produto.categoria|default:"Não categorizado" }}</p>
+                    </div>
+                    <div>
+                        <strong>Status:</strong>
+                        <p style="margin: 0.5rem 0;">
+                            {% if produto.ativo %}
+                                <span style="color: #27ae60;">● Ativo</span>
+                            {% else %}
+                                <span style="color: #e74c3c;">● Inativo</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if produto.descricao %}
+                <div style="margin-top: 1rem;">
+                    <strong>Descrição:</strong>
+                    <p style="margin: 0.5rem 0; background: #f8f9fa; padding: 1rem; border-radius: 4px;">
+                        {{ produto.descricao }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Card de Preços -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="margin-top: 0; color: #2c3e50;">Informações Financeiras</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
+                    <div style="border-right: 1px solid #eee;">
+                        <strong style="display: block; color: #7f8c8d;">Preço de Custo</strong>
+                        <span style="font-size: 1.5rem; color: #e74c3c;">R$ {{ produto.preco_custo }}</span>
+                    </div>
+                    <div style="border-right: 1px solid #eee;">
+                        <strong style="display: block; color: #7f8c8d;">Preço de Venda</strong>
+                        <span style="font-size: 1.5rem; color: #27ae60;">R$ {{ produto.preco_venda }}</span>
+                    </div>
+                    <div>
+                        <strong style="display: block; color: #7f8c8d;">Margem de Lucro</strong>
+                        <span style="font-size: 1.5rem; color: #3498db;">{{ produto.margem_lucro|floatformat:1 }}%</span>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; text-align: center;">
+                    <small style="color: #7f8c8d;">
+                        Lucro: R$ {{ produto.lucro|floatformat:2 }}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar com Informações de Estoque -->
+        <div>
+            <!-- Card de Status do Estoque -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="margin-top: 0; color: #2c3e50;">Estoque</h3>
+                
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <div style="font-size: 3rem; font-weight: bold; 
+                                {% if produto.status_estoque == 'esgotado' %}color: #e74c3c;
+                                {% elif produto.status_estoque == 'baixo' %}color: #f39c12;
+                                {% else %}color: #27ae60;{% endif %}">
+                        {{ produto.estoque_atual }}
+                    </div>
+                    <div style="color: #7f8c8d;">Unidades em estoque</div>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <strong>Status:</strong>
+                    <div style="margin-top: 0.5rem;">
+                        {% if produto.status_estoque == 'esgotado' %}
+                            <span style="background: #e74c3c; color: white; padding: 0.5rem 1rem; border-radius: 20px; display: inline-block;">
+                                🔴 Estoque Esgotado
+                            </span>
+                        {% elif produto.status_estoque == 'baixo' %}
+                            <span style="background: #f39c12; color: white; padding: 0.5rem 1rem; border-radius: 20px; display: inline-block;">
+                                🟡 Estoque Baixo
+                            </span>
+                        {% else %}
+                            <span style="background: #27ae60; color: white; padding: 0.5rem 1rem; border-radius: 20px; display: inline-block;">
+                                🟢 Estoque Normal
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <strong>Estoque Mínimo:</strong>
+                    <p style="margin: 0.5rem 0;">{{ produto.estoque_minimo }} unidades</p>
+                </div>
+
+                {% if produto.localizacao %}
+                <div>
+                    <strong>Localização:</strong>
+                    <p style="margin: 0.5rem 0; background: #f8f9fa; padding: 0.5rem; border-radius: 4px;">
+                        📍 {{ produto.localizacao }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Card de Informações Adicionais -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #2c3e50;">Informações Adicionais</h3>
+                
+                <div style="margin-bottom: 1rem;">
+                    <strong>Unidade de Medida:</strong>
+                    <p style="margin: 0.5rem 0;">{{ produto.get_unidade_medida_display }}</p>
+                </div>
+
+                {% if produto.codigo_barras %}
+                <div style="margin-bottom: 1rem;">
+                    <strong>Código de Barras:</strong>
+                    <p style="margin: 0.5rem 0; font-family: monospace;">{{ produto.codigo_barras }}</p>
+                </div>
+                {% endif %}
+
+                <div style="margin-bottom: 1rem;">
+                    <strong>Data de Criação:</strong>
+                    <p style="margin: 0.5rem 0;">{{ produto.data_criacao|date:"d/m/Y H:i" }}</p>
+                </div>
+
+                <div>
+                    <strong>Última Atualização:</strong>
+                    <p style="margin: 0.5rem 0;">{{ produto.data_atualizacao|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+
+            <!-- Card de Ações Rápidas -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem;">
+                <h3 style="margin-top: 0; color: #2c3e50;">Ações</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a href="{% url 'produto:produto_editar' produto.pk %}" class="btn" style="background: #f39c12; text-align: center;">
+                        ✏️ Editar Produto
+                    </a>
+                    <a href="{% url 'produto:produto_excluir' produto.pk %}" class="btn" style="background: #e74c3c; text-align: center;">
+                        🗑️ Excluir Produto
+                    </a>
+                    <a href="{% url 'produto:lista_produtos' %}" class="btn" style="background: #6c757d; text-align: center;">
+                        ← Voltar para Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn {
+        display: block;
+        padding: 0.75rem 1rem;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+    
+    strong {
+        color: #2c3e50;
+    }
+</style>
+{% endblock %}

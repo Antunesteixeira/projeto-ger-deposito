@@ -1,0 +1,95 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Confirmar Exclusão - SysDepósito{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Exclusão
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
+                        <h4>Tem certeza que deseja excluir?</h4>
+                        <p class="text-muted">
+                            Você está prestes a excluir a categoria:
+                            <br>
+                            <strong>"{{ object.nome }}"</strong>
+                        </p>
+                        
+                        <!-- Informações da Categoria -->
+                        <div class="alert alert-warning text-start">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>Informações da Categoria:
+                            </h6>
+                            <ul class="mb-0">
+                                <li><strong>Nome:</strong> {{ object.nome }}</li>
+                                {% if object.codigo %}
+                                <li><strong>Código:</strong> {{ object.codigo }}</li>
+                                {% endif %}
+                                <li><strong>Produtos:</strong> {{ object.produto_set.count }}</li>
+                                <li><strong>Status:</strong> 
+                                    {% if object.status_ativo %}
+                                    <span class="badge bg-success">Ativa</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inativa</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Verificação de produtos -->
+                        {% if object.produto_set.count > 0 %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Atenção:</strong> Esta categoria possui 
+                            <strong>{{ object.produto_set.count }} produto(s)</strong> vinculado(s). 
+                            Você não pode excluir categorias que possuem produtos.
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Atenção:</strong> Esta ação não pode ser desfeita.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{% url 'produto:lista_categorias' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            
+                            {% if object.produto_set.count == 0 %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Sim, Excluir Categoria
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-danger" disabled>
+                                <i class="fas fa-ban"></i> Não é possível excluir
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+
+                    <!-- Link para gerenciar produtos -->
+                    {% if object.produto_set.count > 0 %}
+                    <div class="mt-4">
+                        <a href="{% url 'produto:lista_produtos' %}?categoria={{ object.id }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-boxes me-2"></i>Gerenciar Produtos desta Categoria
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

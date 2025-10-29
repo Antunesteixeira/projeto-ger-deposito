@@ -1,0 +1,468 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Produtos - SysDepósito{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-boxes text-primary"></i> Gerenciar Produtos
+        </h1>
+        <a href="{% url 'produto:produto_novo' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Produto
+        </a>
+    </div>
+
+    <!-- Card de Busca Rápida -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-search me-2"></i>Busca Rápida
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="search-container position-relative">
+                        <input type="text" 
+                               id="busca-rapida" 
+                               class="form-control form-control-lg" 
+                               placeholder="Digite nome, SKU ou descrição do produto..."
+                               autocomplete="off">
+                        <div class="input-group-append position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%);">
+                            <span class="input-group-text bg-transparent border-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" id="btn-busca-avancada" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-filter me-2"></i>Busca Avançada
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resultados da Busca Rápida -->
+            <div id="resultados-busca" class="mt-3" style="display: none;">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="card-title mb-0">Resultados da Busca</h6>
+                            <button type="button" id="fechar-busca" class="btn-close"></button>
+                        </div>
+                        <div id="lista-resultados"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Avançados (inicialmente oculto) -->
+    <div id="filtros-avancados" class="card mb-4" style="display: none;">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>Filtros Avançados
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" id="form-filtros">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="id_nome" class="form-label">Nome ou SKU</label>
+                        <input type="text" name="nome" id="id_nome" class="form-control" 
+                               value="{{ request.GET.nome }}" placeholder="Buscar...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="id_categoria" class="form-label">Categoria</label>
+                        <select name="categoria" id="id_categoria" class="form-select">
+                            <option value="">Todas as categorias</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}" 
+                                    {% if request.GET.categoria == categoria.id|stringformat:"i" %}selected{% endif %}>
+                                {{ categoria.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="id_ativo" class="form-label">Status</label>
+                        <select name="ativo" id="id_ativo" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="true" {% if request.GET.ativo == 'true' %}selected{% endif %}>Ativos</option>
+                            <option value="false" {% if request.GET.ativo == 'false' %}selected{% endif %}>Inativos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="d-grid w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ total_produtos }}</h4>
+                            <small>Total de Produtos</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-box fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ produtos_ativos.count }}</h4>
+                            <small>Produtos Ativos</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contador de resultados com paginação -->
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <div class="text-muted">
+                {% if produtos %}
+                Mostrando <strong>{{ produtos.start_index }} - {{ produtos.end_index }}</strong> 
+                de <strong>{{ produtos.paginator.count }}</strong> produtos
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Produtos -->
+    <div class="card">
+        <div class="card-body">
+            {% if produtos %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>SKU</th>
+                            <th>Categoria</th>
+                            <th>Preço Venda</th>
+                            <th>Estoque</th>
+                            <th>Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produto in produtos %}
+                        <tr>
+                            <td>
+                                <strong>{{ produto.nome }}</strong>
+                                {% if produto.descricao %}
+                                <br><small class="text-muted">{{ produto.descricao|truncatewords:5 }}</small>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ produto.sku }}</code></td>
+                            <td>
+                                {% if produto.categoria %}
+                                <span class="badge bg-info">{{ produto.categoria.nome }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Sem categoria</span>
+                                {% endif %}
+                            </td>
+                            <td>R$ {{ produto.preco_venda }}</td>
+                            <td>
+                                <span class="badge {% if produto.estoque_atual <= produto.estoque_minimo %}bg-warning{% else %}bg-success{% endif %}">
+                                    {{ produto.estoque_atual }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if produto.ativo %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'produto:produto_detalhe' produto.pk %}" 
+                                       class="btn btn-outline-info" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'produto:produto_editar' produto.pk %}" 
+                                       class="btn btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'produto:produto_excluir' produto.pk %}" 
+                                       class="btn btn-outline-danger" title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            {% if produtos.has_other_pages %}
+            <nav aria-label="Paginação de produtos" class="mt-4">
+                <ul class="pagination justify-content-center mb-0">
+                    <!-- Botão Anterior -->
+                    {% if produtos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" 
+                           href="?page={{ produtos.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                           aria-label="Anterior">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                    </li>
+                    {% endif %}
+
+                    <!-- Páginas -->
+                    {% for i in produtos.paginator.page_range %}
+                        {% if produtos.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
+                        {% elif i > produtos.number|add:'-3' and i < produtos.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" 
+                               href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Botão Próximo -->
+                    {% if produtos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" 
+                           href="?page={{ produtos.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                           aria-label="Próximo">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Informação da página atual -->
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        Página {{ produtos.number }} de {{ produtos.paginator.num_pages }}
+                    </small>
+                </div>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-box fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Nenhum produto encontrado</h4>
+                <p class="text-muted">Utilize a busca acima para encontrar produtos ou cadastre um novo.</p>
+                <a href="{% url 'produto:produto_novo' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Cadastrar Primeiro Produto
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .search-container {
+        position: relative;
+    }
+    
+    .resultado-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .resultado-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .resultado-item:last-child {
+        border-bottom: none;
+    }
+    
+    .sku-badge {
+        font-family: monospace;
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+        color: #6c757d;
+    }
+
+    .pagination .page-link {
+        color: #495057;
+        border: 1px solid #dee2e6;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #e9ecef;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const buscaInput = document.getElementById('busca-rapida');
+        const resultadosDiv = document.getElementById('resultados-busca');
+        const listaResultados = document.getElementById('lista-resultados');
+        const fecharBusca = document.getElementById('fechar-busca');
+        const btnBuscaAvancada = document.getElementById('btn-busca-avancada');
+        const filtrosAvancados = document.getElementById('filtros-avancados');
+        
+        let timeoutId;
+
+        // Busca em tempo real
+        buscaInput.addEventListener('input', function() {
+            clearTimeout(timeoutId);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                resultadosDiv.style.display = 'none';
+                return;
+            }
+            
+            timeoutId = setTimeout(() => {
+                buscarProdutos(query);
+            }, 300);
+        });
+
+        // Fechar resultados
+        fecharBusca.addEventListener('click', function() {
+            resultadosDiv.style.display = 'none';
+            buscaInput.value = '';
+        });
+
+        // Toggle filtros avançados
+        btnBuscaAvancada.addEventListener('click', function() {
+            const isVisible = filtrosAvancados.style.display === 'block';
+            filtrosAvancados.style.display = isVisible ? 'none' : 'block';
+            this.innerHTML = isVisible ? 
+                '<i class="fas fa-filter me-2"></i>Busca Avançada' : 
+                '<i class="fas fa-times me-2"></i>Fechar Filtros';
+        });
+
+        function buscarProdutos(query) {
+            // Mostrar loading
+            listaResultados.innerHTML = `
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Buscando produtos...
+                </div>
+            `;
+            resultadosDiv.style.display = 'block';
+
+            fetch(`{% url 'produto:buscar_produtos_api' %}?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.resultados && data.resultados.length > 0) {
+                        exibirResultados(data.resultados);
+                    } else {
+                        listaResultados.innerHTML = `
+                            <div class="text-center py-3 text-muted">
+                                <i class="fas fa-search fa-2x mb-2"></i>
+                                <p>Nenhum produto encontrado para "${query}"</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro na busca:', error);
+                    listaResultados.innerHTML = `
+                        <div class="text-center py-3 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Erro ao buscar produtos
+                        </div>
+                    `;
+                });
+        }
+
+        function exibirResultados(resultados) {
+            let html = '';
+            
+            resultados.forEach(produto => {
+                html += `
+                    <div class="resultado-item" onclick="window.location.href='${produto.url_detalhe}'">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${produto.nome}</h6>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="sku-badge">${produto.sku}</span>
+                                    ${produto.categoria ? `<span class="badge bg-info">${produto.categoria}</span>` : ''}
+                                </div>
+                                <small class="text-muted">
+                                    Estoque: ${produto.estoque_atual} | 
+                                    Preço: R$ ${produto.preco_venda}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        ${resultados.length} produto(s) encontrado(s)
+                    </small>
+                </div>
+            `;
+            
+            listaResultados.innerHTML = html;
+        }
+
+        // Fechar resultados ao clicar fora
+        document.addEventListener('click', function(event) {
+            if (!resultadosDiv.contains(event.target) && event.target !== buscaInput) {
+                resultadosDiv.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

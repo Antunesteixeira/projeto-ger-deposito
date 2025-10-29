@@ -1,0 +1,281 @@
+<!-- templates/escolas/lista_escolas.html -->
+{% extends '_layout/base.html' %}
+
+{% block title %}Escolas - SysDepósito{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-school text-primary me-2"></i>Escolas
+            </h1>
+            <p class="text-muted mb-0">Gerenciamento de instituições de ensino</p>
+        </div>
+        <a href="{% url 'escola:nova_escola' %}" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i>Nova Escola
+        </a>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start-primary shadow h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                Total de Escolas
+                            </div>
+                            <div class="h5 fw-bold text-gray-800">{{ total_escolas }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-school fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start-success shadow h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                Escolas Ativas
+                            </div>
+                            <div class="h5 fw-bold text-gray-800">{{ escolas_ativas }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start-warning shadow h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                                Escolas Inativas
+                            </div>
+                            <div class="h5 fw-bold text-gray-800">{{ escolas_inativas }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-pause-circle fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-light py-3">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2 text-primary"></i>Filtros
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Nome da Escola</label>
+                        {{ form_search.nome }}
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Cidade</label>
+                        {{ form_search.cidade }}
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Tipo</label>
+                        {{ form_search.tipo_escola }}
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Nível</label>
+                        {{ form_search.nivel_ensino }}
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="form-check form-switch mt-3">
+                            {{ form_search.ativo }}
+                            <label class="form-check-label fw-semibold" for="{{ form_search.ativo.id_for_label }}">
+                                Somente ativas
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-1">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <a href="{% url 'escola:lista_escolas' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabela de Escolas -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2 text-primary"></i>Lista de Escolas
+            </h5>
+            <span class="badge bg-primary fs-6">{{ escolas.paginator.count }} registros</span>
+        </div>
+        <div class="card-body p-0">
+            {% if escolas %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Nome</th>
+                            <th>Código INEP</th>
+                            <th>Tipo</th>
+                            <th>Nível</th>
+                            <th>Cidade/Estado</th>
+                            <th class="text-center">Alunos</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for escola in escolas %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold">{{ escola.nome }}</div>
+                                <small class="text-muted">{{ escola.bairro|default:"-" }}</small>
+                            </td>
+                            <td>
+                                <code>{{ escola.codigo_inep|default:"-" }}</code>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ escola.get_tipo_escola_display }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ escola.get_nivel_ensino_display }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ escola.cidade }}</div>
+                                <small class="text-muted">{{ escola.estado }}</small>
+                            </td>
+                            <td class="text-center fw-bold">
+                                {{ escola.quantidade_alunos|default:0 }}
+                            </td>
+                            <td class="text-center">
+                                {% if escola.ativo %}
+                                <span class="badge bg-success">Ativa</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inativa</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'escola:detalhe_escola' escola.id %}" 
+                                       class="btn btn-outline-primary" title="Detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'escola:editar_escola' escola.id %}" 
+                                       class="btn btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if escola.ativo %}
+                                    <form method="post" action="#" 
+                                          class="d-inline" onsubmit="return confirm('Desativar esta escola?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger" title="Desativar">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form method="post" action="{% url 'escolas:toggle_escola_ativo' escola.id %}" 
+                                          class="d-inline" onsubmit="return confirm('Ativar esta escola?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-success" title="Ativar">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-school fa-4x text-muted"></i>
+                </div>
+                <h4 class="text-muted mb-3">Nenhuma escola encontrada</h4>
+                <p class="text-muted mb-4">
+                    {% if filtros_aplicados %}
+                    Não há escolas registradas com os filtros atuais.
+                    {% else %}
+                    Não há escolas cadastradas no sistema.
+                    {% endif %}
+                </p>
+                <a href="{% url 'escola:nova_escola' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Cadastrar Primeira Escola
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Paginação -->
+    {% if escolas.has_other_pages %}
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="text-muted">
+            Mostrando {{ escolas.start_index }} - {{ escolas.end_index }} de {{ escolas.paginator.count }} escolas
+        </div>
+        <nav>
+            <ul class="pagination mb-0">
+                {% if escolas.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ escolas.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for i in escolas.paginator.page_range %}
+                    {% if escolas.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                    {% elif i > escolas.number|add:'-3' and i < escolas.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if escolas.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ escolas.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

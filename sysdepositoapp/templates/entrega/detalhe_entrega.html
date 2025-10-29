@@ -1,0 +1,351 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Entrega {{ entrega.numero_pedido }} - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Cabeçalho -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2>Entrega {{ entrega.numero_pedido }}</h2>
+            <p style="color: #7f8c8d; margin: 0;">Escola: {{ entrega.escola.nome }}</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <!-- CORREÇÃO: Verificação simplificada do status -->
+            {% if entrega.status != 'entregue' %}
+            <form method="post" action="{% url 'entrega:finalizar_entrega' entrega.pk %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="background: #27ae60; border: none; cursor: pointer;"
+                       onclick="return confirm('Tem certeza que deseja finalizar esta entrega? O estoque será atualizado.')">
+                    ✅ Finalizar Entrega
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'entrega:editar_entrega' entrega.pk %}" class="btn" style="background: #f39c12;">✏️ Editar</a>
+            <a href="{% url 'entrega:lista_entregas' %}" class="btn" style="background: #6c757d;">← Voltar</a>
+        </div>
+    </div>
+
+    <!-- Debug Info (remover depois) -->
+    <div style="background: #e8f4fd; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #3498db;">
+        <strong>Debug Info:</strong>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+            <div><strong>Status:</strong> "{{ entrega.status }}"</div>
+            <div><strong>Data Entrega Real:</strong> {{ entrega.data_entrega_real|default:"None" }}</div>
+            <div><strong>Status em maiúsculo:</strong> "{{ entrega.status|upper }}"</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Informações Principais -->
+        <div>
+            <!-- Card de Informações da Entrega -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="margin-top: 0; color: #2c3e50;">📋 Informações da Entrega</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <strong>Número do Pedido:</strong>
+                        <p style="margin: 0.5rem 0;">{{ entrega.numero_pedido }}</p>
+                    </div>
+                    <div>
+                        <strong>Status:</strong>
+                        <p style="margin: 0.5rem 0;">
+                            <!-- CORREÇÃO: Verificação individual para cada status -->
+                            {% if entrega.status == 'planejada' %}
+                            <span style="background: #f39c12; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                📋 Planejada
+                            </span>
+                            {% elif entrega.status == 'preparacao' %}
+                            <span style="background: #3498db; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                📦 Em Preparação
+                            </span>
+                            {% elif entrega.status == 'transporte' %}
+                            <span style="background: #9b59b6; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                🚚 Em Transporte
+                            </span>
+                            {% elif entrega.status == 'entregue' %}
+                            <span style="background: #27ae60; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                ✅ Entregue
+                            </span>
+                            {% elif entrega.status == 'cancelada' %}
+                            <span style="background: #e74c3c; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                ❌ Cancelada
+                            </span>
+                            {% else %}
+                            <span style="background: #95a5a6; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                {{ entrega.status }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if entrega.atrasada %}
+                            <span style="background: #e74c3c; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; margin-left: 0.5rem;">
+                                ⚠️ Atrasada
+                            </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <strong>Data de Criação:</strong>
+                        <p style="margin: 0.5rem 0;">{{ entrega.data_criacao|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div>
+                        <strong>Data Prevista de Entrega:</strong>
+                        <p style="margin: 0.5rem 0; {% if entrega.atrasada %}color: #e74c3c; font-weight: bold;{% endif %}">
+                            {{ entrega.data_entrega_prevista|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    
+                    <!-- Data Real de Entrega -->
+                    {% if entrega.data_entrega_real %}
+                    <div>
+                        <strong>Data Real de Entrega:</strong>
+                        <p style="margin: 0.5rem 0; color: #27ae60; font-weight: bold;">
+                            {{ entrega.data_entrega_real|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div>
+                        <strong>Data Real de Entrega:</strong>
+                        <p style="margin: 0.5rem 0; color: #7f8c8d; font-style: italic;">
+                            Ainda não entregue
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <strong>Tipo de Entrega:</strong>
+                        <p style="margin: 0.5rem 0;">
+                            {% if entrega.tipo_entrega == 'urgente' %}
+                            <span style="background: #e74c3c; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                                URGENTE
+                            </span>
+                            {% elif entrega.tipo_entrega == 'agendada' %}
+                            <span style="background: #3498db; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                                AGENDADA
+                            </span>
+                            {% else %}
+                            <span style="background: #7f8c8d; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                                NORMAL
+                            </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <strong>Responsável:</strong>
+                        <p style="margin: 0.5rem 0;">{{ entrega.responsavel_entrega }}</p>
+                    </div>
+                </div>
+                
+                {% if entrega.motorista %}
+                <div style="margin-top: 1rem;">
+                    <strong>Informações de Transporte:</strong>
+                    <p style="margin: 0.5rem 0;">
+                        Motorista: {{ entrega.motorista }}
+                        {% if entrega.veiculo %}
+                        • Veículo: {{ entrega.veiculo }}
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if entrega.observacoes %}
+                <div style="margin-top: 1rem;">
+                    <strong>Observações:</strong>
+                    <p style="margin: 0.5rem 0; background: #f8f9fa; padding: 1rem; border-radius: 4px;">
+                        {{ entrega.observacoes }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Card de Itens da Entrega -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #2c3e50;">📦 Itens da Entrega</h3>
+                
+                {% if entrega.itens.all %}
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 1rem; text-align: left;">Produto</th>
+                                <th style="padding: 1rem; text-align: center;">Quantidade</th>
+                                <th style="padding: 1rem; text-align: right;">Preço Unitário</th>
+                                <th style="padding: 1rem; text-align: right;">Subtotal</th>
+                                <th style="padding: 1rem; text-align: left;">Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in entrega.itens.all %}
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 1rem;">
+                                    <strong>{{ item.produto.nome }}</strong>
+                                    <div style="color: #7f8c8d; font-size: 0.8rem;">
+                                        SKU: {{ item.produto.sku }}
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; text-align: center; font-weight: bold;">
+                                    {{ item.quantidade }}
+                                </td>
+                                <td style="padding: 1rem; text-align: right;">
+                                    R$ {{ item.produto.preco_venda }}
+                                </td>
+                                <td style="padding: 1rem; text-align: right; font-weight: bold;">
+                                    R$ {{ item.subtotal }}
+                                </td>
+                                <td style="padding: 1rem;">
+                                    {% if item.observacao %}
+                                    <span style="color: #7f8c8d;">{{ item.observacao }}</span>
+                                    {% else %}
+                                    <span style="color: #bdc3c7;">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #f8f9fa; font-weight: bold;">
+                                <td style="padding: 1rem;" colspan="2">
+                                    Total: {{ entrega.itens.count }} produtos, {{ entrega.total_itens }} itens
+                                </td>
+                                <td style="padding: 1rem; text-align: right;" colspan="3">
+                                    Total: R$ {{ entrega.valor_total }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+                    <p>Nenhum item cadastrado nesta entrega.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Card da Escola -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="margin-top: 0; color: #2c3e50;">🏫 Escola</h3>
+                
+                <div style="margin-bottom: 1rem;">
+                    <strong>Nome:</strong>
+                    <p style="margin: 0.5rem 0;">{{ entrega.escola.nome }}</p>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <strong>Endereço:</strong>
+                    <p style="margin: 0.5rem 0; background: #f8f9fa; padding: 0.75rem; border-radius: 4px;">
+                        {{ entrega.escola.endereco_completo|default:entrega.escola.endereco|linebreaksbr }}
+                    </p>
+                </div>
+                
+                {% if entrega.escola.telefone %}
+                <div style="margin-bottom: 1rem;">
+                    <strong>Telefone:</strong>
+                    <p style="margin: 0.5rem 0;">{{ entrega.escola.telefone }}</p>
+                </div>
+                {% endif %}
+                
+                {% if entrega.escola.diretor %}
+                <div style="margin-bottom: 1rem;">
+                    <strong>Diretor:</strong>
+                    <p style="margin: 0.5rem 0;">{{ entrega.escola.diretor }}</p>
+                </div>
+                {% endif %}
+                
+                {% if entrega.escola.email %}
+                <div>
+                    <strong>Email:</strong>
+                    <p style="margin: 0.5rem 0;">{{ entrega.escola.email }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Card de Ações -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #2c3e50;">⚡ Ações</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a href="{% url 'entrega:editar_entrega' entrega.pk %}" class="btn" style="background: #f39c12; text-align: center;">
+                        ✏️ Editar Entrega
+                    </a>
+                    
+                    <!-- CORREÇÃO: Verificação simplificada -->
+                    {% if entrega.status != 'entregue' %}
+                    <form method="post" action="{% url 'entrega:finalizar_entrega' entrega.pk %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn" style="background: #27ae60; text-align: center; width: 100%; border: none; cursor: pointer;"
+                               onclick="return confirm('Tem certeza que deseja finalizar esta entrega? O estoque será atualizado.')">
+                            ✅ Finalizar Entrega
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="btn" style="background: #95a5a6; text-align: center; cursor: not-allowed;">
+                        ✅ Entrega Finalizada
+                    </div>
+                    {% endif %}
+
+                    <a href="{% url 'entrega:gerar_pdf_entrega' entrega.pk %}" class="btn" style="background: #e74c3c; text-align: center;">
+                            📄 Gerar PDF
+                        </a>
+                    
+                    <a href="{% url 'entrega:lista_entregas' %}" class="btn" style="background: #6c757d; text-align: center;">
+                        ← Voltar para Lista
+                    </a>
+                </div>
+                
+            </div>
+
+            <!-- Card de Informações do Sistema -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem;">
+                <h3 style="margin-top: 0; color: #2c3e50;">ℹ️ Informações</h3>
+                
+                <div style="font-size: 0.9rem;">
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>Criado por:</strong>
+                        <div>{{ entrega.usuario.username|default:"Sistema" }}</div>
+                    </div>
+                    
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>Data de Criação:</strong>
+                        <div>{{ entrega.data_criacao|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    
+                    <div>
+                        <strong>Última Atualização:</strong>
+                        <div>{{ entrega.data_atualizacao|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn {
+        display: block;
+        padding: 0.75rem 1rem;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+    
+    form {
+        margin: 0;
+    }
+    
+    button.btn {
+        font-family: inherit;
+        font-size: inherit;
+    }
+</style>
+{% endblock %}

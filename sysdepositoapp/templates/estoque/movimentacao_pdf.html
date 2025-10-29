@@ -1,0 +1,310 @@
+<!-- templates/estoque/movimentacao_pdf.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Comprovante de Movimentação - {{ movimentacao.id }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px;
+                color: #666;
+                font-family: Arial, sans-serif;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 1px solid #2c3e50;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 16px;
+            margin: 0 0 3px 0;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 9px;
+            margin: 0;
+        }
+        
+        .info-section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background-color: #34495e;
+            color: white;
+            padding: 4px 6px;
+            font-size: 9px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            border-radius: 2px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .info-item {
+            margin-bottom: 3px;
+            padding: 2px 0;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 8px;
+        }
+        
+        .info-value {
+            color: #333;
+            font-size: 8px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 1px 4px;
+            border-radius: 6px;
+            font-size: 7px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-entrada { 
+            background-color: #27ae60; 
+            color: white; 
+        }
+        
+        .status-saida { 
+            background-color: #e74c3c; 
+            color: white; 
+        }
+        
+        .product-info {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 3px;
+            margin: 8px 0;
+            border-left: 3px solid #3498db;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        
+        .product-item {
+            padding: 4px;
+            background: white;
+            border-radius: 2px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .product-label {
+            font-weight: bold;
+            color: #7f8c8d;
+            font-size: 7px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        
+        .product-value {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 8px;
+        }
+        
+        .summary {
+            background-color: #34495e;
+            color: white;
+            padding: 6px 8px;
+            border-radius: 3px;
+            margin: 8px 0;
+            text-align: center;
+            font-size: 9px;
+        }
+        
+        .observations {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 2px;
+            padding: 6px;
+            margin: 8px 0;
+            font-size: 8px;
+        }
+        
+        .footer {
+            margin-top: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #ddd;
+            font-size: 7px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <div class="header">
+        <h1>COMPROVANTE DE MOVIMENTAÇÃO</h1>
+        <p class="subtitle">SysDepósito - Sistema de Gerenciamento de Estoque</p>
+    </div>
+
+    <!-- Informações da Movimentação -->
+    <div class="info-section">
+        <div class="section-title">📋 INFORMAÇÕES DA MOVIMENTAÇÃO</div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Número:</span>
+                <span class="info-value">MOV-{{ movimentacao.id|stringformat:"06d" }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Data:</span>
+                <span class="info-value">{{ movimentacao.data_ocorrencia|date:"d/m/Y H:i" }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Tipo:</span>
+                <span class="info-value">
+                    {% if movimentacao.tipo == 'E' or movimentacao.tipo == 'ENTRADA' %}
+                        <span class="status-badge status-entrada">ENTRADA</span>
+                    {% else %}
+                        <span class="status-badge status-saida">SAÍDA</span>
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Quantidade:</span>
+                <span class="info-value" style="font-weight: bold;">{{ movimentacao.quantidade }} unidades</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Motivo:</span>
+                <span class="info-value">{{ movimentacao.get_motivo_display }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Registrado por:</span>
+                <span class="info-value">{{ movimentacao.usuario.username|default:"Sistema" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações do Produto -->
+    <div class="info-section">
+        <div class="section-title">📦 INFORMAÇÕES DO PRODUTO</div>
+        
+        <div class="product-info">
+            <div style="font-weight: bold; font-size: 9px; color: #2c3e50; margin-bottom: 6px;">
+                {{ movimentacao.produto.nome }}
+            </div>
+            
+            <div class="product-grid">
+                <div class="product-item">
+                    <div class="product-label">SKU</div>
+                    <div class="product-value">{{ movimentacao.produto.sku|default:"N/A" }}</div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-label">Categoria</div>
+                    <div class="product-value">{{ movimentacao.produto.categoria.nome|default:"N/A" }}</div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-label">Localização</div>
+                    <div class="product-value">{{ movimentacao.produto.localizacao|default:"N/A" }}</div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-label">Estoque Anterior</div>
+                    <div class="product-value">{{ movimentacao.estoque_anterior }} un</div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-label">Estoque Atual</div>
+                    <div class="product-value" style="color: {% if movimentacao.estoque_atual == 0 %}#e74c3c{% elif movimentacao.estoque_atual <= movimentacao.produto.estoque_minimo %}#f39c12{% else %}#27ae60{% endif %};">
+                        {{ movimentacao.estoque_atual }} un
+                    </div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-label">Estoque Mínimo</div>
+                    <div class="product-value">{{ movimentacao.produto.estoque_minimo }} un</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="summary">
+        <strong>RESUMO: {{ movimentacao.estoque_anterior }} → 
+        {% if movimentacao.tipo == 'E' or movimentacao.tipo == 'ENTRADA' %}+{% else %}-{% endif %}{{ movimentacao.quantidade }} = 
+        {{ movimentacao.estoque_atual }}</strong>
+    </div>
+
+    <!-- Observações -->
+    {% if movimentacao.observacao %}
+    <div class="info-section">
+        <div class="section-title">📝 OBSERVAÇÕES</div>
+        <div class="observations">
+            {{ movimentacao.observacao|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Informações do Sistema -->
+    <div class="info-section">
+        <div class="section-title">ℹ️ INFORMAÇÕES DO SISTEMA</div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Data de Criação:</span>
+                <span class="info-value">{{ movimentacao.data_criacao|date:"d/m/Y H:i" }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Documento Gerado:</span>
+                <span class="info-value">{{ gerado_em|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="footer">
+        SysDepósito - Sistema de Gerenciamento de Estoque | Documento gerado automaticamente
+    </div>
+</body>
+</html>

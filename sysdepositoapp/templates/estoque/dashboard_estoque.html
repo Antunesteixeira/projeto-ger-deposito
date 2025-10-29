@@ -1,0 +1,183 @@
+{% extends '_layout/base.html' %}
+
+{% block title %}Dashboard do Estoque - SysDepósito{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Cabeçalho -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>📊 Dashboard do Estoque</h2>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'estoque:movimentacao_estoque' %}" class="btn" style="background: #27ae60;">➕ Nova Movimentação</a>
+            <a href="{% url 'estoque:ajuste_estoque' %}" class="btn" style="background: #f39c12;">⚙️ Ajuste de Estoque</a>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #3498db;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #3498db;">{{ total_produtos }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Total de Produtos</p>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #27ae60;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #27ae60;">{{ produtos_estoque_normal }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Estoque Normal</p>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #f39c12;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #f39c12;">{{ produtos_estoque_baixo }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Estoque Baixo</p>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; border-left: 4px solid #e74c3c;">
+            <h3 style="margin: 0; font-size: 2.5rem; color: #e74c3c;">{{ produtos_esgotados }}</h3>
+            <p style="margin: 0; color: #7f8c8d;">Produtos Esgotados</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <!-- Alertas de Estoque -->
+        <div style="background: white; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center;">
+                ⚠️ Alertas de Estoque
+            </h3>
+            
+            {% if produtos_alerta %}
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for produto in produtos_alerta %}
+                <div style="padding: 1rem; border-bottom: 1px solid #eee; {% if not forloop.last %}margin-bottom: 0.5rem;{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>{{ produto.nome }}</strong>
+                            <div style="color: #7f8c8d; font-size: 0.9rem;">SKU: {{ produto.sku }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; 
+                                        {% if produto.estoque_atual == 0 %}color: #e74c3c;
+                                        {% elif produto.estoque_baixo %}color: #f39c12;
+                                        {% else %}color: #27ae60;{% endif %}">
+                                {{ produto.estoque_atual }} un
+                            </div>
+                            <div style="font-size: 0.8rem; color: #7f8c8d;">
+                                Mín: {{ produto.estoque_minimo }} un
+                            </div>
+                        </div>
+                    </div>
+                    {% if produto.estoque_atual == 0 %}
+                    <div style="background: #e74c3c; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin-top: 0.5rem;">
+                        🔴 ESTOQUE ESGOTADO
+                    </div>
+                    {% elif produto.estoque_baixo %}
+                    <div style="background: #f39c12; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin-top: 0.5rem;">
+                        🟡 ESTOQUE BAIXO
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                ✅ Nenhum alerta de estoque no momento
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'estoque:lista_estoque' %}?status_estoque=baixo" class="btn" style="background: #6c757d; display: block; text-align: center;">
+                    Ver Todos os Alertas
+                </a>
+            </div>
+        </div>
+
+        <!-- Movimentações Recentes -->
+        <div style="background: white; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center;">
+                📋 Movimentações Recentes
+            </h3>
+            
+            {% if movimentacoes_recentes %}
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for mov in movimentacoes_recentes %}
+                <div style="padding: 1rem; border-bottom: 1px solid #eee; {% if not forloop.last %}margin-bottom: 0.5rem;{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <strong>{{ mov.produto.nome }}</strong>
+                            <div style="color: #7f8c8d; font-size: 0.9rem;">
+                                {{ mov.get_motivo_display }}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; 
+                                        {% if mov.tipo == 'E' %}color: #27ae60;
+                                        {% else %}color: #e74c3c;{% endif %}">
+                                {% if mov.tipo == 'E' %}+{% else %}-{% endif %}{{ mov.quantidade }}
+                            </div>
+                            <div style="font-size: 0.8rem; color: #7f8c8d;">
+                                {{ mov.data_movimentacao|date:"d/m H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% if mov.observacao %}
+                    <div style="font-size: 0.8rem; color: #7f8c8d; margin-top: 0.25rem;">
+                        {{ mov.observacao|truncatechars:50 }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                📝 Nenhuma movimentação recente
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'estoque:lista_movimentacoes' %}" class="btn" style="background: #6c757d; display: block; text-align: center;">
+                    Ver Todas as Movimentações
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Rápido -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
+        <a href="{% url 'estoque:lista_estoque' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">📦</div>
+            <h4 style="margin: 0.5rem 0;">Lista de Estoque</h4>
+            <p style="margin: 0; color: #7f8c8d;">Ver todos os produtos</p>
+        </a>
+        <a href="{% url 'estoque:movimentacao_estoque' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">🔄</div>
+            <h4 style="margin: 0.5rem 0;">Movimentações</h4>
+            <p style="margin: 0; color: #7f8c8d;">Entradas e saídas</p>
+        </a>
+        <a href="{% url 'estoque:relatorios_estoque' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">📈</div>
+            <h4 style="margin: 0.5rem 0;">Relatórios</h4>
+            <p style="margin: 0; color: #7f8c8d;">Relatórios de estoque</p>
+        </a>
+        <a href="{% url 'estoque:exportar_estoque_csv' %}" style="background: white; padding: 1.5rem; border-radius: 8px; text-decoration: none; color: inherit; text-align: center;">
+            <div style="font-size: 2rem;">💾</div>
+            <h4 style="margin: 0.5rem 0;">Exportar</h4>
+            <p style="margin: 0; color: #7f8c8d;">Exportar para CSV</p>
+        </a>
+    </div>
+</div>
+
+<style>
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #2c3e50;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
